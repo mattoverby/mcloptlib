@@ -8,7 +8,7 @@ It's really just a fork of [Patrick Wieschollek's CppOptimizationLibrary](https:
 
 # todo
 
-- Problem with Eigen::Dynamic
+- Eigen::Dynamic Dimension
 - Newtons method
 
 # license
