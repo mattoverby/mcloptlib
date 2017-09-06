@@ -22,7 +22,7 @@
 const int DIM = 16;
 #include "TestProblem.hpp"
 #include "MCL/LBFGS.hpp"
-#include "MCL/ConjugateGradient.hpp"
+#include "MCL/NonLinearCG.hpp"
 #include <iostream>
 
 using namespace mcl::optimize;
