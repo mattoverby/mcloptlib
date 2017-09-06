@@ -31,7 +31,7 @@ typedef Matrix<double,DIM,1> VectorX;
 ConstProblem cp;
 
 
-int test_LBFGS(){
+bool test_LBFGS(){
 	LBFGS<double,DIM> solver;
 	solver.max_iters = 1000;
 	VectorX x = VectorX::Random();
@@ -39,51 +39,52 @@ int test_LBFGS(){
 	for( int i=0; i<DIM; ++i ){
 		if( std::isnan(x[i]) || std::isinf(x[i]) ){
 			std::cerr << "(L-BFGS) Bad values in x: " << x[i] << std::endl;
-			return EXIT_FAILURE;
+			return false;
 		}
 	}
 	VectorX r = cp.A*x - cp.b;
 	double rn = r.norm(); // x should minimize |Ax-b|
 	if( rn > 1e-6 ){
 		std::cerr << "(L-BFGS) Failed to minimize: |Ax-b| = " << rn << std::endl;
-		return EXIT_FAILURE;
+		return false;
 	}
 	std::cout << "(L-BFGS) Success" << std::endl;
-	return EXIT_SUCCESS;
+	return true;
 }
 
 
-int test_CG(){
-	ConjugateGradient<double,DIM> solver;
+bool test_CG(){
+	NonLinearCG<double,DIM> solver;
 	solver.max_iters = 1000;
 	VectorX x = VectorX::Random();
 	solver.minimize( cp, x );
 	for( int i=0; i<DIM; ++i ){
 		if( std::isnan(x[i]) || std::isinf(x[i]) ){
 			std::cerr << "(CG) Bad values in x: " << x[i] << std::endl;
-			return EXIT_FAILURE;
+			return false;
 		}
 	}
 	VectorX r = cp.A*x - cp.b;
 	double rn = r.norm(); // x should minimize |Ax-b|
 	if( rn > 1e-6 ){
 		std::cerr << "(CG) Failed to minimize: |Ax-b| = " << rn << std::endl;
-		return EXIT_FAILURE;
+		return false;
 	}
 	std::cout << "(CG) Success" << std::endl;
-	return EXIT_SUCCESS;
+	return true;
 }
 
 
 int main(int argc, char *argv[] ){
 	srand(100);
-	if( argc != 2 ){ return EXIT_FAILURE; }
-	std::string mode(argv[1]);
+	std::string mode = "all";
+	if( argc == 2 ){ mode = std::string(argv[1]); }
 
-	if( mode=="lbfgs" ){ return test_LBFGS(); }
-	if( mode=="cg" ){ return test_CG(); }
+	bool success = true;
+	if( mode=="lbfgs" || mode=="all" ){ success &= test_LBFGS(); }
+	if( mode=="cg" || mode=="all" ){ success &= test_CG(); }
 
-	std::cerr << "Unknown solver " << mode << std::endl;
+	if( success ){ return EXIT_SUCCESS; }
 	return EXIT_FAILURE;
 }
 

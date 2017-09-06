@@ -19,8 +19,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef MCL_CONJGRADDESCENT_H
-#define MCL_CONJGRADDESCENT_H
+#ifndef MCL_NONLINEARCG_H
+#define MCL_NONLINEARCG_H
 
 #include "Armijo.hpp"
 
@@ -28,7 +28,7 @@ namespace mcl {
 namespace optimize {
 
 template<typename Scalar, int DIM>
-class ConjugateGradient {
+class NonLinearCG {
 private:
 	typedef Eigen::Matrix<Scalar,DIM,1> VectorX;
 	typedef Eigen::Matrix<Scalar,DIM,DIM> MatrixX;
@@ -43,7 +43,7 @@ public:
 		Init() : max_iters(100), eps(0) {}
 	};
 
-	ConjugateGradient( const Init &init = Init() ) : max_iters(init.max_iters), eps(init.eps) {}
+	NonLinearCG( const Init &init = Init() ) : max_iters(init.max_iters), eps(init.eps) {}
 
 	void minimize(Problem<Scalar,DIM> &problem, VectorX &x){
 		VectorX grad, grad_old, p;
