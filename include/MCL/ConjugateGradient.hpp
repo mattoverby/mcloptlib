@@ -37,7 +37,6 @@ public:
 	int max_iters;
 	Scalar eps;
 
-	// Struct of solver parameters for L-BFGS
 	struct Init {
 		int max_iters;
 		Scalar eps; // 0 = run full iterations
