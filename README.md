@@ -4,7 +4,7 @@ By Matt Overby
 [http://www.mattoverby.net](http://www.mattoverby.net)
 
 Fastoptlib is a header-only, lightweight optimization library for C++.
-It's really just a fork of [Patrick Wieschollek's CppOptimizationLibrary](https://github.com/PatWie/CppNumericalSolvers) with significant modifications for efficiency and simplicity.
+It's really just a fork of [Patrick Wieschollek's CppOptimizationLibrary](https://github.com/PatWie/CppNumericalSolvers) with a lot of the features gutted out.
 
 # todo
 
