@@ -38,5 +38,16 @@ public:
 	}
 
 	double value(const VectorX &x){ return (A*x-b).norm(); }
-	void gradient(const VectorX &x, VectorX &grad){ grad = A*x-b; }
+	double gradient(const VectorX &x, VectorX &grad){ grad = A*x-b; return value(x); }
+};
+
+class Rosenbrock : public mcl::optlib::Problem<double,2> {
+public:
+	typedef Eigen::Matrix<double,2,1> VectorX;
+	double value(const VectorX &x){
+		double a = 1.0 - x[0];
+		double b = x[1] - x[0]*x[0];
+		return a*a + b*b*100.0;
+	}
+
 };

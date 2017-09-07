@@ -27,49 +27,95 @@ const int DIM = 16;
 
 using namespace mcl::optlib;
 using namespace Eigen;
-typedef Matrix<double,DIM,1> VectorX;
-ConstProblem cp;
 
+ConstProblem cp;
+Rosenbrock rb;
 
 bool test_LBFGS(){
-	LBFGS<double,DIM> solver;
-	solver.max_iters = 1000;
-	VectorX x = VectorX::Random();
-	solver.minimize( cp, x );
-	for( int i=0; i<DIM; ++i ){
-		if( std::isnan(x[i]) || std::isinf(x[i]) ){
-			std::cerr << "(L-BFGS) Bad values in x: " << x[i] << std::endl;
+
+	{ // higher dimensional linear case
+		NonLinearCG<double,DIM> solver;
+		solver.max_iters = 1000;
+		typedef Matrix<double,DIM,1> VectorX;
+		VectorX x = VectorX::Random();
+		solver.minimize( cp, x );
+		for( int i=0; i<DIM; ++i ){
+			if( std::isnan(x[i]) || std::isinf(x[i]) ){
+				std::cerr << "(L-BFGS) Bad values in x: " << x[i] << std::endl;
+				return false;
+			}
+		}
+		VectorX r = cp.A*x - cp.b;
+		double rn = r.norm(); // x should minimize |Ax-b|
+		if( rn > 1e-4 ){
+			std::cerr << "(L-BFGS) Failed to minimize: |Ax-b| = " << rn << std::endl;
 			return false;
 		}
 	}
-	VectorX r = cp.A*x - cp.b;
-	double rn = r.norm(); // x should minimize |Ax-b|
-	if( rn > 1e-6 ){
-		std::cerr << "(L-BFGS) Failed to minimize: |Ax-b| = " << rn << std::endl;
-		return false;
+
+	{ // nonlinear
+		NonLinearCG<double,2> solver;
+		solver.max_iters = 1000;
+		Vector2d x = Vector2d::Random();
+		solver.minimize( rb, x );
+		for( int i=0; i<2; ++i ){
+			if( std::isnan(x[i]) || std::isinf(x[i]) ){
+				std::cerr << "(L-BFGS) Bad values in x: " << x[i] << std::endl;
+				return false;
+			}
+		}
+		double rn = (Vector2d(1,1) - x).norm();
+		if( rn > 1e-4 ){
+			std::cerr << "(L-BFGS) Failed to minimize: Rosenbrock = " << rn << std::endl;
+			return false;
+		}
 	}
+
 	std::cout << "(L-BFGS) Success" << std::endl;
 	return true;
 }
 
 
 bool test_CG(){
-	NonLinearCG<double,DIM> solver;
-	solver.max_iters = 1000;
-	VectorX x = VectorX::Random();
-	solver.minimize( cp, x );
-	for( int i=0; i<DIM; ++i ){
-		if( std::isnan(x[i]) || std::isinf(x[i]) ){
-			std::cerr << "(CG) Bad values in x: " << x[i] << std::endl;
+
+	{ // higher dimensional linear case
+		NonLinearCG<double,DIM> solver;
+		solver.max_iters = 1000;
+		typedef Matrix<double,DIM,1> VectorX;
+		VectorX x = VectorX::Random();
+		solver.minimize( cp, x );
+		for( int i=0; i<DIM; ++i ){
+			if( std::isnan(x[i]) || std::isinf(x[i]) ){
+				std::cerr << "(CG) Bad values in x: " << x[i] << std::endl;
+				return false;
+			}
+		}
+		VectorX r = cp.A*x - cp.b;
+		double rn = r.norm(); // x should minimize |Ax-b|
+		if( rn > 1e-4 ){
+			std::cerr << "(CG) Failed to minimize: |Ax-b| = " << rn << std::endl;
 			return false;
 		}
 	}
-	VectorX r = cp.A*x - cp.b;
-	double rn = r.norm(); // x should minimize |Ax-b|
-	if( rn > 1e-6 ){
-		std::cerr << "(CG) Failed to minimize: |Ax-b| = " << rn << std::endl;
-		return false;
+
+	{ // nonlinear
+		NonLinearCG<double,2> solver;
+		solver.max_iters = 1000;
+		Vector2d x = Vector2d::Random();
+		solver.minimize( rb, x );
+		for( int i=0; i<2; ++i ){
+			if( std::isnan(x[i]) || std::isinf(x[i]) ){
+				std::cerr << "(CG) Bad values in x: " << x[i] << std::endl;
+				return false;
+			}
+		}
+		double rn = (Vector2d(1,1) - x).norm();
+		if( rn > 1e-4 ){
+			std::cerr << "(CG) Failed to minimize: Rosenbrock = " << rn << std::endl;
+			return false;
+		}
 	}
+
 	std::cout << "(CG) Success" << std::endl;
 	return true;
 }

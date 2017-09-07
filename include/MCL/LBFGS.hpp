@@ -19,7 +19,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include "MoreThuente.hpp"
+#include "Problem.hpp"
 
 #ifndef MCL_LBFGS_H
 #define MCL_LBFGS_H
@@ -56,7 +56,8 @@ public:
 
 	LBFGS( const Init &init = Init() ) : max_iters(init.max_iters), eps(init.eps), init_hess(init.init_hess) {}
 
-	void minimize(Problem<Scalar,DIM> &problem, VectorX &x){
+	// Returns number of iterations used
+	inline int minimize(Problem<Scalar,DIM> &problem, VectorX &x){
 
 		MatrixM s = MatrixM::Zero();
 		MatrixM y = MatrixM::Zero();
@@ -104,11 +105,11 @@ public:
 				alpha_init = std::min(1.0, 1.0 / grad.template lpNorm<Eigen::Infinity>() );
 			}
 
-			Scalar rate = MoreThuente<Scalar, DIM, decltype(problem)>::linesearch(x, -q,  problem, alpha_init);
-			if(rate <= 0){ rate = 1; }
-
+			Scalar rate = linesearch(problem, x, -q, alpha_init);
 			x = x - rate * q;
-			problem.gradient(x, grad);
+			if( rate*q.squaredNorm() <= eps ){ break; }
+
+			problem.gradient(x,grad);
 			gradNorm = grad.template lpNorm<Eigen::Infinity>();
 			if(gradNorm <= eps){
 				// Only change hessian guess if we break out the loop via convergence.
@@ -139,8 +140,25 @@ public:
 		}
 
 		init_hess = new_hess_guess;
+		return globIter;
 
 	} // end minimize
+
+	static inline Scalar linesearch(Problem<Scalar,DIM> &problem, const VectorX &x, const VectorX &p, Scalar alpha_init) {
+		const Scalar tau = 0.7;
+		const Scalar beta = 0.2;
+		const int maxIter = 10;
+		VectorX grad;
+		Scalar alpha = std::abs(alpha_init);
+		for( int i=0; i<maxIter; ++i ){
+			Scalar fx = problem.gradient(x, grad);
+			Scalar fxap = problem.value(x + alpha*p);
+			Scalar gdp = grad.dot(p);
+			if( fxap <= fx + alpha*beta*gdp ){ break; } // Armijo
+			alpha *= tau;
+		}
+		return alpha;
+	}
 };
 
 }

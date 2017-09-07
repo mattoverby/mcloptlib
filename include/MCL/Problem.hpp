@@ -37,23 +37,18 @@ private:
 	typedef Eigen::Matrix<Scalar,DIM,DIM> MatrixX;
 
 public:
-	// Compute objective value
+	// Compute just the value
 	virtual Scalar value(const VectorX &x) = 0;
 
-	// Compute gradient
-	virtual void gradient(const VectorX &x, VectorX &grad){
+	// Compute the objective value and the gradient
+	virtual Scalar gradient(const VectorX &x, VectorX &grad){
 		finiteGradient(x, grad);
+		return value(x);
 	}
 
 	// Compute hessian
 	virtual void hessian(const VectorX &x, MatrixX &hessian){
 		finiteHessian(x, hessian);
-	}
-
-	// Compute value and gradient at the same time
-	virtual Scalar value_gradient(const VectorX &x, VectorX &grad){
-		gradient(x, grad);
-		return value(x);
 	}
 
 	// Gradient with finite differences

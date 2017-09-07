@@ -45,9 +45,10 @@ public:
 
 	NonLinearCG( const Init &init = Init() ) : max_iters(init.max_iters), eps(init.eps) {}
 
-	void minimize(Problem<Scalar,DIM> &problem, VectorX &x){
+	int minimize(Problem<Scalar,DIM> &problem, VectorX &x){
 		VectorX grad, grad_old, p;
-		for( int iter=0; iter<max_iters; ++iter ){
+		int iter=0;
+		for( ; iter<max_iters; ++iter ){
 
 			problem.gradient(x, grad);
 			Scalar gradNorm = grad.template lpNorm<Eigen::Infinity>();
@@ -63,6 +64,7 @@ public:
 			x = x + alpha*p;
 			grad_old = grad;
 		}
+		return iter;
 	} // end minimize
 
 };
