@@ -25,7 +25,7 @@ const int DIM = 16;
 #include "MCL/NonLinearCG.hpp"
 #include <iostream>
 
-using namespace mcl::optimize;
+using namespace mcl::optlib;
 using namespace Eigen;
 typedef Matrix<double,DIM,1> VectorX;
 ConstProblem cp;

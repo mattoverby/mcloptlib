@@ -28,7 +28,7 @@
 #include <Eigen/Dense>
 
 namespace mcl {
-namespace optimize {
+namespace optlib {
 
 template<typename Scalar, int DIM>
 class Problem {

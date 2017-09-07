@@ -24,7 +24,7 @@
 #include "Problem.hpp"
 
 namespace mcl {
-namespace optimize {
+namespace optlib {
 
 template<typename Scalar, int DIM, typename P>
 class MoreThuente {

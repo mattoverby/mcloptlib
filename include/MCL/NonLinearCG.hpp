@@ -25,7 +25,7 @@
 #include "Armijo.hpp"
 
 namespace mcl {
-namespace optimize {
+namespace optlib {
 
 template<typename Scalar, int DIM>
 class NonLinearCG {

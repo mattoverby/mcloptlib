@@ -25,7 +25,7 @@
 #define MCL_LBFGS_H
 
 namespace mcl {
-namespace optimize {
+namespace optlib {
 
 // L-BFGS implementation based on Nocedal & Wright Numerical Optimization book (Section 7.2)
 // DIM = dimension of the problem

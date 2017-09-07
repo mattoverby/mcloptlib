@@ -25,7 +25,7 @@
 #include "Problem.hpp"
 
 namespace mcl {
-namespace optimize {
+namespace optlib {
 
 // Backtracking-Armijo
 template<typename Scalar, int DIM, typename P>

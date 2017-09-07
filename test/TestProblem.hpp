@@ -24,7 +24,7 @@
 // Assumes DIM has been set before including
 
 // min |Ax-b|
-class ConstProblem : public mcl::optimize::Problem<double,DIM> {
+class ConstProblem : public mcl::optlib::Problem<double,DIM> {
 public:
 	typedef Eigen::Matrix<double,DIM,1> VectorX;
 	typedef Eigen::Matrix<double,DIM,DIM> MatrixX;
