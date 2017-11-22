@@ -19,27 +19,27 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-const int DIM = 16;
 #include "TestProblem.hpp"
 #include "MCL/LBFGS.hpp"
 #include "MCL/NonLinearCG.hpp"
+#include "MCL/Newton.hpp"
 #include <iostream>
 
 using namespace mcl::optlib;
 using namespace Eigen;
 
-ConstProblem cp;
-Rosenbrock rb;
+DynProblem cp(16); // Uses Eigen::Dynamic
+Rosenbrock rb; // Dim = 2, also tests finite gradient/hessian
 
 bool test_LBFGS(){
 
 	{ // higher dimensional linear case
-		LBFGS<double,DIM> solver;
+		LBFGS<double,Eigen::Dynamic> solver;
 		solver.max_iters = 1000;
-		typedef Matrix<double,DIM,1> VectorX;
-		VectorX x = VectorX::Random();
+		typedef Matrix<double,Eigen::Dynamic,1> VectorX;
+		VectorX x = VectorX::Random(cp.dim());
 		solver.minimize( cp, x );
-		for( int i=0; i<DIM; ++i ){
+		for( int i=0; i<cp.dim(); ++i ){
 			if( std::isnan(x[i]) || std::isinf(x[i]) ){
 				std::cerr << "(L-BFGS) Bad values in x: " << x[i] << std::endl;
 				return false;
@@ -66,7 +66,7 @@ bool test_LBFGS(){
 		}
 		double rn = (Vector2d(1,1) - x).norm();
 		if( rn > 1e-4 ){
-// Something's up, I'll debug later
+			//TODO Something's up, I'll debug later
 //			std::cerr << "(L-BFGS) Failed to minimize: Rosenbrock = " << rn << std::endl;
 //			return false;
 		}
@@ -80,12 +80,12 @@ bool test_LBFGS(){
 bool test_CG(){
 
 	{ // higher dimensional linear case
-		NonLinearCG<double,DIM> solver;
+		NonLinearCG<double,Eigen::Dynamic> solver;
 		solver.max_iters = 1000;
-		typedef Matrix<double,DIM,1> VectorX;
-		VectorX x = VectorX::Random();
+		typedef Matrix<double,Eigen::Dynamic,1> VectorX;
+		VectorX x = VectorX::Random(cp.dim());
 		solver.minimize( cp, x );
-		for( int i=0; i<DIM; ++i ){
+		for( int i=0; i<cp.dim(); ++i ){
 			if( std::isnan(x[i]) || std::isinf(x[i]) ){
 				std::cerr << "(CG) Bad values in x: " << x[i] << std::endl;
 				return false;
@@ -121,6 +121,56 @@ bool test_CG(){
 	return true;
 }
 
+bool test_Newton(){
+
+	bool success = true;
+
+	{ // higher dimensional linear case
+		// Since Newtons is second order and quadratic, should find
+		// the solution in one step.
+		Newton<double,Eigen::Dynamic> solver;
+		solver.max_iters = 1;
+		typedef Matrix<double,Eigen::Dynamic,1> VectorX;
+		VectorX x = VectorX::Random(cp.dim());
+		solver.minimize( cp, x );
+		for( int i=0; i<cp.dim(); ++i ){
+			if( std::isnan(x[i]) || std::isinf(x[i]) ){
+				std::cerr << "(Newton) Bad values in x: " << x[i] << std::endl;
+				return false;
+			}
+		}
+		VectorX r = cp.A*x - cp.b;
+		double rn = r.norm(); // x should minimize |Ax-b|
+		if( rn > 1e-4 ){
+			std::cerr << "(Newton) Failed to minimize: |Ax-b| = " << rn << std::endl;
+			success = false;
+		}
+	}
+
+	{ // nonlinear
+		Newton<double,2> solver;
+		solver.max_iters = 100;
+		Vector2d x = Vector2d::Random();
+		solver.minimize( rb, x );
+		for( int i=0; i<2; ++i ){
+			if( std::isnan(x[i]) || std::isinf(x[i]) ){
+				std::cerr << "(Newton) Bad values in x: " << x[i] << std::endl;
+				return false;
+			}
+		}
+		double rn = (Vector2d(1,1) - x).norm();
+		if( rn > 1e-4 ){
+			std::cerr << "(Newton) Failed to minimize: Rosenbrock = " << rn << std::endl;
+			success = false;
+		} else if( !success ) {
+			std::cout << "(Newton) Success for Rosenbrock = " << rn << std::endl;
+		}
+	}
+
+	if( success ){ std::cout << "(Newton) Success" << std::endl; }
+	return success;
+}
+
 
 int main(int argc, char *argv[] ){
 	srand(100);
@@ -130,6 +180,7 @@ int main(int argc, char *argv[] ){
 	bool success = true;
 	if( mode=="lbfgs" || mode=="all" ){ success &= test_LBFGS(); }
 	if( mode=="cg" || mode=="all" ){ success &= test_CG(); }
+	if( mode=="newton" || mode=="all" ){ success &= test_Newton(); }
 
 	if( success ){ return EXIT_SUCCESS; }
 	return EXIT_FAILURE;

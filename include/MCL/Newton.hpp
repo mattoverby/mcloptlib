@@ -19,8 +19,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef MCL_NONLINEARCG_H
-#define MCL_NONLINEARCG_H
+#ifndef MCL_NEWTON_H
+#define MCL_NEWTON_H
 
 #include "Armijo.hpp"
 
@@ -28,7 +28,7 @@ namespace mcl {
 namespace optlib {
 
 template<typename Scalar, int DIM>
-class NonLinearCG {
+class Newton {
 private:
 	typedef Eigen::Matrix<Scalar,DIM,1> VectorX;
 	typedef Eigen::Matrix<Scalar,DIM,DIM> MatrixX;
@@ -40,39 +40,52 @@ public:
 	struct Init {
 		int max_iters;
 		Scalar eps; // 0 = run full iterations
-		Init() : max_iters(100), eps(0) {}
+		Init() : max_iters(20), eps(0) {}
 	};
 
-	NonLinearCG( const Init &init = Init() ) : max_iters(init.max_iters), eps(init.eps) {}
+	Newton( const Init &init = Init() ) : max_iters(init.max_iters), eps(init.eps) {}
 
 	int minimize(Problem<Scalar,DIM> &problem, VectorX &x){
+
 		#if DIM == -1 // Eigen::Dynamic
 			int dim = x.rows();
 			VectorX grad = VectorX::Zero(dim);
-			VectorX grad_old = VectorX::Zero(dim);
-			VectorX p = VectorX::Zero(dim);
+			MatrixX hess = MatrixX::Zero(dim,dim);
+			VectorX delta_x = VectorX::Zero(dim);
 		#else
-			VectorX grad, grad_old, p;
+			VectorX grad, delta_x;
+			MatrixX hess;
 		#endif
-		int iter=0;
-		for( ; iter<max_iters; ++iter ){
 
-			problem.gradient(x, grad);
-			Scalar gradNorm = grad.template lpNorm<Eigen::Infinity>();
-			if( gradNorm <= eps ){ break; }
+		int iter = 0;
+		for( ; iter < max_iters; ++iter ){
 
-			if( iter==0 ){ p = -grad; }
-			else {
-				Scalar beta = grad.dot(grad) / (grad_old.dot(grad_old));
-				p = -grad + beta*p;
-			}
+			problem.gradient(x,grad);
+			problem.hessian(x,hess);
 
-			Scalar alpha = Armijo<Scalar, DIM, decltype(problem)>::linesearch(x, p, problem, 1);
-			x = x + alpha*p;
-			grad_old = grad;
+			#if DIM > 4 || DIM < 1
+				delta_x = hess.householderQr().solve(-grad);
+			#else
+				delta_x = -hess.inverse()*grad;
+			#endif
+
+			Scalar rate = Armijo<Scalar, DIM, decltype(problem)>::linesearch(x, delta_x, problem, 1);
+			x += rate * delta_x;
+			if( rate * delta_x.squaredNorm() <= eps ){ break; }
 		}
+
 		return iter;
-	} // end minimize
+	}
+
+// Copied from https://eigen.tuxfamily.org/dox/group__TutorialLinearAlgebra.html
+//	Method			Requirements	Spd (sm)	Spd (lg)	Accuracy
+//	partialPivLu()		Invertible	++		++		+
+//	fullPivLu()		None		-		- -		+++
+//	householderQr()		None		++		++		+
+//	colPivHouseholderQr()	None		++		-		+++
+//	fullPivHouseholderQr()	None		-		- -		+++
+//	llt()			PD		+++		+++		+
+//	ldlt()			P/N SD 		+++		+		++
 
 };
 

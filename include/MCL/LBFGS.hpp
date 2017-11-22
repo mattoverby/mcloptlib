@@ -59,12 +59,23 @@ public:
 	// Returns number of iterations used
 	inline int minimize(Problem<Scalar,DIM> &problem, VectorX &x){
 
-		MatrixM s = MatrixM::Zero();
-		MatrixM y = MatrixM::Zero();
-	
-		VectorM alpha = VectorM::Zero();
-		VectorM rho = VectorM::Zero();
-		VectorX grad, q, grad_old, x_old;
+		int dim = x.rows();
+		#if DIM == -1 // Eigen::Dynamic
+			MatrixM s = MatrixM::Zero(dim,M);
+			MatrixM y = MatrixM::Zero(dim,M);
+			VectorM alpha = VectorM::Zero(M);
+			VectorM rho = VectorM::Zero(M);
+			VectorX grad = VectorX::Zero(dim);
+			VectorX q = VectorX::Zero(dim);
+			VectorX grad_old = VectorX::Zero(dim);
+			VectorX x_old = VectorX::Zero(dim);
+		#else
+			MatrixM s = MatrixM::Zero(dim,M);
+			MatrixM y = MatrixM::Zero(dim,M);
+			VectorM alpha = VectorM::Zero();
+			VectorM rho = VectorM::Zero();
+			VectorX grad, q, grad_old, x_old;
+		#endif
 
 		problem.gradient(x, grad);
 		Scalar gamma_k = init_hess;
@@ -117,6 +128,7 @@ public:
 				break;
 			}
 
+
 			VectorX s_temp = x - x_old;
 			VectorX y_temp = grad - grad_old;
 
@@ -148,7 +160,12 @@ public:
 		const Scalar tau = 0.7;
 		const Scalar beta = 0.2;
 		const int maxIter = 10;
-		VectorX grad;
+		#if DIM == -1 // Eigen::Dynamic
+			int dim = x.rows();
+			VectorX grad = VectorX::Zero(dim);
+		#else
+			VectorX grad;
+		#endif
 		Scalar alpha = std::abs(alpha_init);
 		for( int i=0; i<maxIter; ++i ){
 			Scalar fx = problem.gradient(x, grad);

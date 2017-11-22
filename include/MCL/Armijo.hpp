@@ -39,7 +39,13 @@ public:
 		const Scalar beta = 0.2;
 		const int maxIter = 1000000;
 		Scalar alpha = std::abs(alpha_init);
-		VectorX grad;
+
+		#if DIM == -1 // Eigen::Dynamic
+			VectorX grad = VectorX::Zero(dim);
+		#else
+			VectorX grad;
+		#endif
+
 		for( int i=0; i<maxIter; ++i ){
 			Scalar f_xap = problem.value(x + alpha*p);
 			problem.gradient(x, grad);
@@ -49,7 +55,6 @@ public:
 		}
 		return alpha;
 	}
-
 };
 
 }

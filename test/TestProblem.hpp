@@ -21,24 +21,25 @@
 
 #include "MCL/Problem.hpp"
 
-// Assumes DIM has been set before including
-
 // min |Ax-b|
-class ConstProblem : public mcl::optlib::Problem<double,DIM> {
+class DynProblem : public mcl::optlib::Problem<double,Eigen::Dynamic> {
 public:
-	typedef Eigen::Matrix<double,DIM,1> VectorX;
-	typedef Eigen::Matrix<double,DIM,DIM> MatrixX;
+	typedef Eigen::Matrix<double,Eigen::Dynamic,1> VectorX;
+	typedef Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> MatrixX;
 
 	MatrixX A;
 	VectorX b;
-	ConstProblem(){
-		A = MatrixX::Random();
+	DynProblem( int dim_ ){
+		A = MatrixX::Random(dim_,dim_);
 		A = A.transpose()*A;
-		b = VectorX::Random();
+		b = VectorX::Random(dim_);
 	}
+
+	int dim() const { return b.rows(); }
 
 	double value(const VectorX &x){ return (A*x-b).norm(); }
 	double gradient(const VectorX &x, VectorX &grad){ grad = A*x-b; return value(x); }
+	void hessian(const VectorX &x, MatrixX &hess){ (void)(x); hess = A; }
 };
 
 class Rosenbrock : public mcl::optlib::Problem<double,2> {
