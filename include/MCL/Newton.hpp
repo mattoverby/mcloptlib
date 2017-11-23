@@ -47,27 +47,21 @@ public:
 
 	int minimize(Problem<Scalar,DIM> &problem, VectorX &x){
 
-		#if DIM == -1 // Eigen::Dynamic
-			int dim = x.rows();
-			VectorX grad = VectorX::Zero(dim);
-			MatrixX hess = MatrixX::Zero(dim,dim);
-			VectorX delta_x = VectorX::Zero(dim);
-		#else
-			VectorX grad, delta_x;
-			MatrixX hess;
-		#endif
-
+		int dim = x.rows();
+		VectorX grad = VectorX::Zero(dim);
+		MatrixX hess = MatrixX::Zero(dim,dim);
+		VectorX delta_x = VectorX::Zero(dim);
 		int iter = 0;
 		for( ; iter < max_iters; ++iter ){
 
 			problem.gradient(x,grad);
 			problem.hessian(x,hess);
 
-			#if DIM > 4 || DIM < 1
+			if( dim == Eigen::Dynamic || dim > 4 ){
 				delta_x = hess.householderQr().solve(-grad);
-			#else
+			} else {
 				delta_x = -hess.inverse()*grad;
-			#endif
+			}
 
 			Scalar rate = Armijo<Scalar, DIM, decltype(problem)>::linesearch(x, delta_x, problem, 1);
 			x += rate * delta_x;

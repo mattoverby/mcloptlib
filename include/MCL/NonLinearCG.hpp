@@ -46,14 +46,12 @@ public:
 	NonLinearCG( const Init &init = Init() ) : max_iters(init.max_iters), eps(init.eps) {}
 
 	int minimize(Problem<Scalar,DIM> &problem, VectorX &x){
-		#if DIM == -1 // Eigen::Dynamic
-			int dim = x.rows();
-			VectorX grad = VectorX::Zero(dim);
-			VectorX grad_old = VectorX::Zero(dim);
-			VectorX p = VectorX::Zero(dim);
-		#else
-			VectorX grad, grad_old, p;
-		#endif
+
+		int dim = x.rows();
+		VectorX grad = VectorX::Zero(dim);
+		VectorX grad_old = VectorX::Zero(dim);
+		VectorX p = VectorX::Zero(dim);
+
 		int iter=0;
 		for( ; iter<max_iters; ++iter ){
 
