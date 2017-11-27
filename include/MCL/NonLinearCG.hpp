@@ -47,10 +47,13 @@ public:
 
 	int minimize(Problem<Scalar,DIM> &problem, VectorX &x){
 
-		int dim = x.rows();
-		VectorX grad = VectorX::Zero(dim);
-		VectorX grad_old = VectorX::Zero(dim);
-		VectorX p = VectorX::Zero(dim);
+		VectorX grad, grad_old, p;
+		if( DIM == Eigen::Dynamic ){
+			int dim = x.rows();
+			grad.resize(dim);
+			grad_old.resize(dim);
+			p.resize(dim);
+		}
 
 		int iter=0;
 		for( ; iter<max_iters; ++iter ){
