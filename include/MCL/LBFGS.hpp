@@ -20,6 +20,7 @@
 // SOFTWARE.
 
 #include "Problem.hpp"
+#include "MoreThuente.hpp"
 
 #ifndef MCL_LBFGS_H
 #define MCL_LBFGS_H
@@ -108,7 +109,8 @@ public:
 				alpha_init = std::min(1.0, 1.0 / grad.template lpNorm<Eigen::Infinity>() );
 			}
 
-			Scalar rate = linesearch(problem, x, -q, alpha_init);
+//			Scalar rate = linesearch(problem, x, -q, alpha_init);
+			Scalar rate = MoreThuente<Scalar, DIM, decltype(problem)>::linesearch(x, -q, problem, alpha_init);
 			x = x - rate * q;
 			if( rate*q.squaredNorm() <= eps ){ break; }
 

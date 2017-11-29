@@ -36,14 +36,17 @@ private:
 public:
 	int max_iters;
 	Scalar eps;
+	bool use_linesearch;
 
 	struct Init {
 		int max_iters;
 		Scalar eps; // 0 = run full iterations
-		Init() : max_iters(20), eps(0) {}
+		bool use_linesearch;
+		Init() : max_iters(20), eps(0), use_linesearch(true) {}
 	};
 
-	Newton( const Init &init = Init() ) : max_iters(init.max_iters), eps(init.eps) {}
+	Newton( const Init &init = Init() ) : max_iters(init.max_iters),
+		eps(init.eps), use_linesearch(init.use_linesearch) {}
 
 	int minimize(Problem<Scalar,DIM> &problem, VectorX &x){
 
@@ -68,9 +71,10 @@ public:
 				delta_x = -hess.inverse()*grad;
 			}
 
-			Scalar rate = Armijo<Scalar, DIM, decltype(problem)>::linesearch(x, delta_x, problem, 1);
-			x += rate * delta_x;
-			if( rate * delta_x.squaredNorm() <= eps ){ break; }
+			Scalar alpha = !use_linesearch ? Scalar(1) :
+				Armijo<Scalar, DIM, decltype(problem)>::linesearch(x, delta_x, problem, 1);
+			x += alpha * delta_x;
+			if( alpha * delta_x.squaredNorm() <= eps ){ break; }
 		}
 
 		return iter;
