@@ -50,5 +50,5 @@ public:
 		double b = x[1] - x[0]*x[0];
 		return a*a + b*b*100.0;
 	}
-
+	// Test finite diff as well I guess
 };

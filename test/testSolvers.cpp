@@ -37,7 +37,7 @@ bool test_LBFGS(){
 		LBFGS<double,Eigen::Dynamic> solver;
 		solver.max_iters = 1000;
 		typedef Matrix<double,Eigen::Dynamic,1> VectorX;
-		VectorX x = VectorX::Random(cp.dim());
+		VectorX x = VectorX::Zero(cp.dim());
 		solver.minimize( cp, x );
 		for( int i=0; i<cp.dim(); ++i ){
 			if( std::isnan(x[i]) || std::isinf(x[i]) ){
@@ -56,7 +56,7 @@ bool test_LBFGS(){
 	{ // nonlinear
 		LBFGS<double,2> solver;
 		solver.max_iters = 1000;
-		Vector2d x = Vector2d::Random();
+		Vector2d x = Vector2d::Zero();
 		solver.minimize( rb, x );
 		for( int i=0; i<2; ++i ){
 			if( std::isnan(x[i]) || std::isinf(x[i]) ){
@@ -67,8 +67,8 @@ bool test_LBFGS(){
 		double rn = (Vector2d(1,1) - x).norm();
 		if( rn > 1e-4 ){
 			//TODO Something's up, I'll debug later
-//			std::cerr << "(L-BFGS) Failed to minimize: Rosenbrock = " << rn << std::endl;
-//			return false;
+			std::cerr << "(L-BFGS) Failed to minimize: Rosenbrock = " << rn << std::endl;
+			return false;
 		}
 	}
 
@@ -83,7 +83,7 @@ bool test_CG(){
 		NonLinearCG<double,Eigen::Dynamic> solver;
 		solver.max_iters = 1000;
 		typedef Matrix<double,Eigen::Dynamic,1> VectorX;
-		VectorX x = VectorX::Random(cp.dim());
+		VectorX x = VectorX::Zero(cp.dim());
 		solver.minimize( cp, x );
 		for( int i=0; i<cp.dim(); ++i ){
 			if( std::isnan(x[i]) || std::isinf(x[i]) ){
@@ -102,7 +102,7 @@ bool test_CG(){
 	{ // nonlinear
 		NonLinearCG<double,2> solver;
 		solver.max_iters = 1000;
-		Vector2d x = Vector2d::Random();
+		Vector2d x = Vector2d::Zero();
 		solver.minimize( rb, x );
 		for( int i=0; i<2; ++i ){
 			if( std::isnan(x[i]) || std::isinf(x[i]) ){
@@ -131,11 +131,11 @@ bool test_Newton(){
 		Newton<double,Eigen::Dynamic> solver;
 		solver.max_iters = 1;
 		typedef Matrix<double,Eigen::Dynamic,1> VectorX;
-		VectorX x = VectorX::Random(cp.dim());
+		VectorX x = VectorX::Zero(cp.dim());
 		solver.minimize( cp, x );
 		for( int i=0; i<cp.dim(); ++i ){
 			if( std::isnan(x[i]) || std::isinf(x[i]) ){
-				std::cerr << "(Newton) Bad values in x: " << x[i] << std::endl;
+				std::cerr << "(Newton, L) Bad values in x: " << x[i] << std::endl;
 				return false;
 			}
 		}
@@ -150,11 +150,11 @@ bool test_Newton(){
 	{ // nonlinear
 		Newton<double,2> solver;
 		solver.max_iters = 100;
-		Vector2d x = Vector2d::Random();
+		Vector2d x = Vector2d::Zero();
 		solver.minimize( rb, x );
 		for( int i=0; i<2; ++i ){
 			if( std::isnan(x[i]) || std::isinf(x[i]) ){
-				std::cerr << "(Newton) Bad values in x: " << x[i] << std::endl;
+				std::cerr << "(Newton, NL) Bad values in x: " << x[i] << std::endl;
 				return false;
 			}
 		}

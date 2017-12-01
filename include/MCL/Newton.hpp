@@ -23,6 +23,7 @@
 #define MCL_NEWTON_H
 
 #include "Armijo.hpp"
+#include "MoreThuente.hpp"
 
 namespace mcl {
 namespace optlib {
@@ -36,17 +37,14 @@ private:
 public:
 	int max_iters;
 	Scalar eps;
-	bool use_linesearch;
 
 	struct Init {
 		int max_iters;
 		Scalar eps; // 0 = run full iterations
-		bool use_linesearch;
-		Init() : max_iters(20), eps(0), use_linesearch(true) {}
+		Init() : max_iters(20), eps(0) {}
 	};
 
-	Newton( const Init &init = Init() ) : max_iters(init.max_iters),
-		eps(init.eps), use_linesearch(init.use_linesearch) {}
+	Newton( const Init &init = Init() ) : max_iters(init.max_iters), eps(init.eps) {}
 
 	int minimize(Problem<Scalar,DIM> &problem, VectorX &x){
 
@@ -71,10 +69,11 @@ public:
 				delta_x = -hess.inverse()*grad;
 			}
 
-			Scalar alpha = !use_linesearch ? Scalar(1) :
-				Armijo<Scalar, DIM, decltype(problem)>::linesearch(x, delta_x, problem, 1);
-			x += alpha * delta_x;
-			if( alpha * delta_x.squaredNorm() <= eps ){ break; }
+			Scalar rate =
+//				Armijo<Scalar, DIM, decltype(problem)>::linesearch(x, delta_x, problem, 1);
+				MoreThuente<Scalar, DIM, decltype(problem)>::linesearch(x, delta_x, problem, 1);
+			x += rate * delta_x;
+			if( rate * delta_x.squaredNorm() <= eps ){ break; }
 		}
 
 		return iter;
