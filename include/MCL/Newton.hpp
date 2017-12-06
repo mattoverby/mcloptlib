@@ -36,15 +36,8 @@ private:
 
 public:
 	int max_iters;
-	Scalar eps;
 
-	struct Init {
-		int max_iters;
-		Scalar eps; // 0 = run full iterations
-		Init() : max_iters(20), eps(0) {}
-	};
-
-	Newton( const Init &init = Init() ) : max_iters(init.max_iters), eps(init.eps) {}
+	Newton( int max_iters_=20 ) : max_iters(max_iters_) {}
 
 	int minimize(Problem<Scalar,DIM> &problem, VectorX &x){
 
@@ -73,7 +66,7 @@ public:
 				Armijo<Scalar, DIM, decltype(problem)>::linesearch(x, delta_x, problem, 1);
 //				MoreThuente<Scalar, DIM, decltype(problem)>::linesearch(x, delta_x, problem, 1);
 			x += rate * delta_x;
-			if( rate * delta_x.squaredNorm() <= eps ){ break; }
+			if( problem.converged(x,grad) ){ break; }
 		}
 
 		return iter;

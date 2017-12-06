@@ -37,6 +37,9 @@ private:
 	typedef Eigen::Matrix<Scalar,DIM,DIM> MatrixX;
 
 public:
+	// Returns true if the solver has converged
+	virtual bool converged(const VectorX &x, const VectorX &grad) = 0;
+
 	// Compute just the value
 	virtual Scalar value(const VectorX &x) = 0;
 

@@ -45,18 +45,8 @@ private:
 
 public:
 	int max_iters;
-	Scalar eps; // tolerance
-	Scalar init_hess; // initial hessian guess
 
-	// Struct of solver parameters for L-BFGS
-	struct Init {
-		int max_iters;
-		Scalar eps; // 0 = run full iterations
-		Scalar init_hess;
-		Init() : max_iters(30), eps(0), init_hess(1) {}
-	};
-
-	LBFGS( const Init &init = Init() ) : max_iters(init.max_iters), eps(init.eps), init_hess(init.init_hess) {}
+	LBFGS( int max_iters_=30 ) : max_iters(max_iters_) {}
 
 	// Returns number of iterations used
 	inline int minimize(Problem<Scalar,DIM> &problem, VectorX &x){
@@ -72,8 +62,7 @@ public:
 		VectorX x_old = VectorX::Zero(dim);
 
 		problem.gradient(x, grad);
-		Scalar gamma_k = init_hess;
-		Scalar gradNorm = 0.0;
+		Scalar gamma_k = 1.0;
 		Scalar alpha_init = 1.0;
 
 		int global_iter = 0;
@@ -103,7 +92,7 @@ public:
 
 			// is there a descent
 			Scalar dir = q.dot(grad);
-			if(dir <= eps ){
+			if(dir <= 0 ){
 				q = grad;
 				maxIter -= k;
 				k = 0;
@@ -115,13 +104,9 @@ public:
 //				MoreThuente<Scalar, DIM, decltype(problem)>::linesearch(x, -q, problem, alpha_init);
 
 			x = x - rate * q;
-			if( rate*q.squaredNorm() <= eps ){ break; }
+			if( problem.converged(x,grad) ){ break; }
 
 			problem.gradient(x,grad);
-			gradNorm = grad.template lpNorm<Eigen::Infinity>();
-			if(gradNorm <= eps){ break; }
-
-
 			VectorX s_temp = x - x_old;
 			VectorX y_temp = grad - grad_old;
 
