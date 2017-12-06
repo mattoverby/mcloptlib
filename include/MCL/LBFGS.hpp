@@ -21,6 +21,7 @@
 
 #include "Problem.hpp"
 #include "MoreThuente.hpp"
+#include "Armijo.hpp"
 
 #ifndef MCL_LBFGS_H
 #define MCL_LBFGS_H
@@ -72,18 +73,18 @@ public:
 
 		problem.gradient(x, grad);
 		Scalar gamma_k = init_hess;
-		Scalar gradNorm = grad.template lpNorm<Eigen::Infinity>();
-		Scalar alpha_init = gradNorm > 0 ? std::min(1.0, 1.0/gradNorm) : 1;
-		int globIter = 0;
+		Scalar gradNorm = 0.0;
+		Scalar alpha_init = 1.0;
+
+		int global_iter = 0;
 		int maxIter = max_iters;
-		Scalar new_hess_guess = 1; // only changed if we converged to a solution
 
 		for( int k=0; k<maxIter; ++k ){
 
 			x_old = x;
 			grad_old = grad;
 			q = grad;
-			globIter++;
+			global_iter++;
 	
 			// L-BFGS first - loop recursion		
 			int iter = std::min(M, k);
@@ -102,26 +103,23 @@ public:
 
 			// is there a descent
 			Scalar dir = q.dot(grad);
-			if(dir < 1e-4 ){
+			if(dir <= eps ){
 				q = grad;
 				maxIter -= k;
 				k = 0;
 				alpha_init = std::min(1.0, 1.0 / grad.template lpNorm<Eigen::Infinity>() );
 			}
 
-//			Scalar rate = linesearch(problem, x, -q, alpha_init);
-			Scalar rate = MoreThuente<Scalar, DIM, decltype(problem)>::linesearch(x, -q, problem, alpha_init);
+			Scalar rate =
+				Armijo<Scalar, DIM, decltype(problem)>::linesearch(x, -q, problem, alpha_init);
+//				MoreThuente<Scalar, DIM, decltype(problem)>::linesearch(x, -q, problem, alpha_init);
 
 			x = x - rate * q;
 			if( rate*q.squaredNorm() <= eps ){ break; }
 
 			problem.gradient(x,grad);
 			gradNorm = grad.template lpNorm<Eigen::Infinity>();
-			if(gradNorm <= eps){
-				// Only change hessian guess if we break out the loop via convergence.
-				new_hess_guess = gamma_k;
-				break;
-			}
+			if(gradNorm <= eps){ break; }
 
 
 			VectorX s_temp = x - x_old;
@@ -146,27 +144,9 @@ public:
 
 		}
 
-		init_hess = new_hess_guess;
-		return globIter;
+		return global_iter;
 
 	} // end minimize
-
-	static inline Scalar linesearch(Problem<Scalar,DIM> &problem, const VectorX &x, const VectorX &p, Scalar alpha_init) {
-		const Scalar tau = 0.7;
-		const Scalar beta = 0.2;
-		const int maxIter = 10;
-		VectorX grad;
-		if( x.rows() == Eigen::Dynamic ){ grad = VectorX::Zero(x.rows()); }
-		Scalar alpha = std::abs(alpha_init);
-		for( int i=0; i<maxIter; ++i ){
-			Scalar fx = problem.gradient(x, grad);
-			Scalar fxap = problem.value(x + alpha*p);
-			Scalar gdp = grad.dot(p);
-			if( fxap <= fx + alpha*beta*gdp ){ break; } // Armijo
-			alpha *= tau;
-		}
-		return alpha;
-	}
 };
 
 }

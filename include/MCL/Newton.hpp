@@ -70,8 +70,8 @@ public:
 			}
 
 			Scalar rate =
-//				Armijo<Scalar, DIM, decltype(problem)>::linesearch(x, delta_x, problem, 1);
-				MoreThuente<Scalar, DIM, decltype(problem)>::linesearch(x, delta_x, problem, 1);
+				Armijo<Scalar, DIM, decltype(problem)>::linesearch(x, delta_x, problem, 1);
+//				MoreThuente<Scalar, DIM, decltype(problem)>::linesearch(x, delta_x, problem, 1);
 			x += rate * delta_x;
 			if( rate * delta_x.squaredNorm() <= eps ){ break; }
 		}

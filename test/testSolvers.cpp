@@ -66,7 +66,6 @@ bool test_LBFGS(){
 		}
 		double rn = (Vector2d(1,1) - x).norm();
 		if( rn > 1e-4 ){
-			//TODO Something's up, I'll debug later
 			std::cerr << "(L-BFGS) Failed to minimize: Rosenbrock = " << rn << std::endl;
 			return false;
 		}

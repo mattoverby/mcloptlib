@@ -35,18 +35,26 @@ public:
 	typedef Eigen::Matrix<Scalar,DIM,DIM> MatrixX;
 
 	static Scalar linesearch(const VectorX &x, const VectorX &p, P &problem, Scalar alpha_init) {
+
 		const Scalar tau = 0.7;
 		const Scalar beta = 0.2;
-		const int maxIter = 1000000;
+		const int max_iter = 1000000;
 		Scalar alpha = std::abs(alpha_init);
 		VectorX grad = VectorX::Zero(x.rows());
-		for( int i=0; i<maxIter; ++i ){
+		int iter = 0;
+
+		for( int iter=0; iter < max_iter; ++iter ){
 			Scalar f_xap = problem.value(x + alpha*p);
-			problem.gradient(x, grad);
-			Scalar f_x = problem.value(x) + alpha*beta*grad.dot(p);
+			Scalar f_x = problem.gradient(x, grad);
+			f_x += alpha*beta*grad.dot(p);
 			if( f_xap <= f_x ){ break; }
 			alpha *= tau;
 		}
+
+		// Not technically safe, since you might move past. Returning zero
+		// doesn't seem appropriate either. Hopefully the minimizer checks
+		// the change in x and exits when its below a threshold...
+		if( iter == max_iter ){ return std::numeric_limits<Scalar>::min(); }
 		return alpha;
 	}
 };
