@@ -43,7 +43,7 @@ public:
 		VectorX grad = VectorX::Zero(x.rows());
 		int iter = 0;
 
-		for( int iter=0; iter < max_iter; ++iter ){
+		for( iter=0; iter < max_iter; ++iter ){
 			Scalar f_xap = problem.value(x + alpha*p);
 			Scalar f_x = problem.gradient(x, grad);
 			f_x += alpha*beta*grad.dot(p);
