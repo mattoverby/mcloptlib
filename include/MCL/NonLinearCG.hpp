@@ -65,7 +65,7 @@ public:
 			Scalar alpha = Armijo<Scalar, DIM, decltype(problem)>::linesearch(x, p, problem, 1);
 
 			if( alpha <= 0 ){
-				printf("NonLinearCG::minimize: Failure in linesearch");
+				printf("NonLinearCG::minimize: Failure in linesearch\n");
 				return Minimizer<Scalar,DIM>::FAILURE;
 			}
 

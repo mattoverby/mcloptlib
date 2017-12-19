@@ -69,7 +69,7 @@ public:
 //				MoreThuente<Scalar, DIM, decltype(problem)>::linesearch(x, delta_x, problem, 1);
 
 			if( rate <= 0 ){
-				printf("Newton::minimize: Failure in linesearch");
+				printf("Newton::minimize: Failure in linesearch\n");
 				return Minimizer<Scalar,DIM>::FAILURE;
 			}
 

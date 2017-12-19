@@ -102,15 +102,65 @@ public:
 };
 
 
+class StVK : public Problem<double,3> {
+public:
+	typedef Eigen::Matrix<double,3,1> Vec3;
+
+	static inline double ddot( Vec3 &a, Vec3 &b ) { return (a*b.transpose()).trace(); }
+	static inline double v3trace( const Vec3 &v ) { return v[0]+v[1]+v[2]; }
+
+	double mu, lambda, k;
+	Vec3 x0;
+	StVK() : mu(3.33556e+06), lambda(1.66444e+09), k(1.66667e+09),
+		x0(3.70093,0.0247722,0.0210168) {}
+
+	double value(const Vec3 &x){
+		if( x[0]<0.0 || x[1]<0.0 || x[2]<0.0 ){
+			return std::numeric_limits<float>::max(); // No Mr. Linesearch, you have gone too far!
+		}
+		double t1 = energy_density(x); // U(Dx)
+		double t2 = (k*0.5) * (x-x0).squaredNorm(); // quad penalty
+		return t1 + t2;
+	}
+
+	double energy_density(const Vec3 &x) const {
+		Vec3 x2( x[0]*x[0], x[1]*x[1], x[2]*x[2] );
+		Vec3 st = 0.5 * ( x2 - Vec3(1,1,1) ); // strain tensor
+		double st_tr2 = v3trace(st)*v3trace(st);
+		double r = ( mu * ddot( st, st ) + ( lambda * 0.5 * st_tr2 ) );
+		return r;
+	}
+
+
+	double gradient(const Vec3 &x, Vec3 &grad){
+		Vec3 term1(
+			mu * x[0]*(x[0]*x[0] - 1.0),
+			mu * x[1]*(x[1]*x[1] - 1.0),
+			mu * x[2]*(x[2]*x[2] - 1.0)
+		);
+		Vec3 term2 = 0.5 * lambda * ( x.dot(x) - 3.0 ) * x;
+		grad = term1 + term2 + k*(x-x0);
+		return value(x);
+	}
+
+	bool converged(const Vec3 &x, const Vec3 &grad){
+//		(void)(x); return grad.norm() < 1e-10;
+		(void)(x); (void)(grad); return false; // keep going until max iters
+	}
+};
+
+
 int main(){
 	srand(100);
 
 	std::vector< StVKSolver > solver_list;
-	solver_list.emplace_back( std::make_shared< NonLinearCG<double,3> >( NonLinearCG<double,3>() ) );
+//	solver_list.emplace_back( std::make_shared< NonLinearCG<double,3> >( NonLinearCG<double,3>() ) );
 	solver_list.emplace_back( std::make_shared< LBFGS<double,3> >( LBFGS<double,3>() ) );
-	solver_list.emplace_back( std::make_shared< Newton<double,3> >( Newton<double,3>() ) );
+//	solver_list.emplace_back( std::make_shared< Newton<double,3> >( Newton<double,3>() ) );
 
 	NeoHookean nh;
+	StVK stvk;
+
 	bool success = true;
 
 	//
@@ -121,8 +171,11 @@ int main(){
 
 		solver_list[i]->set_max_iters(100);
 		solver_list[i]->set_verbose(1);
-		Eigen::Vector3d x = nh.x0;
-		int iters = solver_list[i]->minimize( nh, x );
+
+//		Eigen::Vector3d x = nh.x0;
+//		int iters = solver_list[i]->minimize( nh, x );
+		Eigen::Vector3d x = stvk.x0;
+		int iters = solver_list[i]->minimize( stvk, x );
 
 		for( int i=0; i<3; ++i ){
 			if( std::isnan(x[i]) || std::isinf(x[i]) ){
@@ -132,7 +185,9 @@ int main(){
 		}
 
 		Eigen::Vector3d grad;
-		nh.gradient(x,grad);
+//		nh.gradient(x,grad);
+		stvk.gradient(x,grad);
+
 		double gn = grad.norm();
 		std::cout << "iters: " << iters << ", grad norm: " << gn << std::endl;
 		if( gn > 1e-4 ){
@@ -141,7 +196,8 @@ int main(){
 		}
 
 		if( iters == Minimizer<double,3>::FAILURE ){
-			std::cerr << "(" << i << ") Failed to minimze" << std::endl;
+			std::cerr << "(" << i << ") Failed to minimize" << std::endl;
+			success = false;
 		}
 
 	} // end loop solvers

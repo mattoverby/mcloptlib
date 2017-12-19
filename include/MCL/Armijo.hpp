@@ -54,7 +54,7 @@ public:
 		}
 
 		if( iter == max_iter ){
-			printf("Armijo::linesearch Error: Reached max_iter");
+			printf("Armijo::linesearch Error: Reached max_iters\n");
 			return -1;
 		}
 

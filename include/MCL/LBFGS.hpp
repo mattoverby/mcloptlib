@@ -106,7 +106,7 @@ public:
 				Armijo<Scalar, DIM, decltype(problem)>::linesearch(x, -q, problem, alpha_init);
 
 			if( rate <= 0 ){
-				printf("LBFGS::minimize: Failure in linesearch");
+				printf("LBFGS::minimize: Failure in linesearch\n");
 				return Minimizer<Scalar,DIM>::FAILURE;
 			}
 
