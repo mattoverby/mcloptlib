@@ -42,7 +42,7 @@ public:
 	double mu, lambda, k;
 	Vec3 x0;
 	NeoHookean() : mu(3.33556e+06), lambda(1.66444e+09), k(1.66667e+09),
-		x0(2.74263,1.25875,1.01497) {}
+		x0(2.74498,1.18735,0.863) {}
 
 	double energy_density(const Vec3 &x) const {
 		double J = x[0]*x[1]*x[2];
@@ -160,7 +160,7 @@ int main(){
 
 	NeoHookean nh;
 	StVK stvk;
-
+	bool use_nh = true; // set to false to use stvk
 	bool success = true;
 
 	//
@@ -172,10 +172,15 @@ int main(){
 		solver_list[i]->set_max_iters(100);
 		solver_list[i]->set_verbose(1);
 
-//		Eigen::Vector3d x = nh.x0;
-//		int iters = solver_list[i]->minimize( nh, x );
-		Eigen::Vector3d x = stvk.x0;
-		int iters = solver_list[i]->minimize( stvk, x );
+		Eigen::Vector3d x; // init guess and final solution
+		int iters = -1; // <= 0 is an error
+		if( use_nh ){
+			x = nh.x0;
+			iters = solver_list[i]->minimize( nh, x );
+		} else {
+			x = stvk.x0;
+			iters = solver_list[i]->minimize( stvk, x );
+		}
 
 		for( int i=0; i<3; ++i ){
 			if( std::isnan(x[i]) || std::isinf(x[i]) ){
@@ -185,8 +190,11 @@ int main(){
 		}
 
 		Eigen::Vector3d grad;
-//		nh.gradient(x,grad);
-		stvk.gradient(x,grad);
+		if( use_nh ){
+			nh.gradient(x,grad);
+		} else {
+			stvk.gradient(x,grad);
+		}
 
 		double gn = grad.norm();
 		std::cout << "iters: " << iters << ", grad norm: " << gn << std::endl;
