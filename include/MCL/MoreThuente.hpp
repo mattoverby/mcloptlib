@@ -86,7 +86,8 @@ public:
 		Scalar stmax = 0.0;
 
 		const int max_iters = 100000;
-		for( int iter=0; iter<max_iters; ++iter ){
+		int iter = 0;
+		for( ; iter<max_iters; ++iter ){
 
 			// make sure we stay in the interval when setting min/max-step-width
 			if (brackt) {
@@ -170,6 +171,10 @@ public:
 			}
 
 		} // end while true
+
+		if( iter == max_iters ){
+			throw std::runtime_error("MoreThuente::linesearch Error: Reached max_iter");
+		}
 
 		return;
 	}

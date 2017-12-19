@@ -24,20 +24,22 @@
 
 #include "Armijo.hpp"
 #include "MoreThuente.hpp"
+#include "Minimizer.hpp"
 
 namespace mcl {
 namespace optlib {
 
 template<typename Scalar, int DIM>
-class Newton {
+class Newton : public Minimizer<Scalar,DIM> {
 private:
 	typedef Eigen::Matrix<Scalar,DIM,1> VectorX;
 	typedef Eigen::Matrix<Scalar,DIM,DIM> MatrixX;
 
 public:
 	int max_iters;
-
-	Newton( int max_iters_=20 ) : max_iters(max_iters_) {}
+	Newton() : max_iters(20) {}
+	void set_max_iters( int iters ){ max_iters = iters; }
+	void set_verbose( int v ){ (void)(v); } // TODO
 
 	int minimize(Problem<Scalar,DIM> &problem, VectorX &x){
 
@@ -65,6 +67,12 @@ public:
 			Scalar rate =
 				Armijo<Scalar, DIM, decltype(problem)>::linesearch(x, delta_x, problem, 1);
 //				MoreThuente<Scalar, DIM, decltype(problem)>::linesearch(x, delta_x, problem, 1);
+
+			if( rate <= 0 ){
+				printf("Newton::minimize: Failure in linesearch");
+				return Minimizer<Scalar,DIM>::FAILURE;
+			}
+
 			x += rate * delta_x;
 			if( problem.converged(x,grad) ){ break; }
 		}

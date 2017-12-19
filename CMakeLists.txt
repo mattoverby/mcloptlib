@@ -39,3 +39,7 @@ enable_testing()
 add_executable(testSolvers test/testSolvers.cpp)
 add_test(testLBFGS testSolvers lbfgs)
 add_test(testCG testSolvers cg)
+add_test(testNewton testSolvers newton)
+
+add_executable(testHyperelastic test/testHyperelastic.cpp)
+add_test(testHyperelastic testHyperelastic) # neohookean test

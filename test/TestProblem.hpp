@@ -49,8 +49,7 @@ class Rosenbrock : public mcl::optlib::Problem<double,2> {
 public:
 	typedef Eigen::Matrix<double,2,1> VectorX;
 	bool converged(const VectorX &x, const VectorX &grad){
-		(void)(x);
-		return grad.norm() < 1e-10;
+		(void)(x); return grad.norm() < 1e-10;
 	}
 	double value(const VectorX &x){
 		double a = 1.0 - x[0];
@@ -59,3 +58,4 @@ public:
 	}
 	// Test finite diff as well I guess
 };
+

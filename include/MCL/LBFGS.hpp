@@ -19,12 +19,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include "Problem.hpp"
-#include "MoreThuente.hpp"
-#include "Armijo.hpp"
-
 #ifndef MCL_LBFGS_H
 #define MCL_LBFGS_H
+
+#include "Armijo.hpp"
+#include "MoreThuente.hpp"
+#include "Minimizer.hpp"
 
 namespace mcl {
 namespace optlib {
@@ -36,7 +36,7 @@ namespace optlib {
 // Original Author: Ioannis Karamouzas
 //
 template<typename Scalar, int DIM, int M=8>
-class LBFGS {
+class LBFGS : public Minimizer<Scalar,DIM> {
 private:
 	typedef Eigen::Matrix<Scalar,DIM,1> VectorX;
 	typedef Eigen::Matrix<Scalar,DIM,DIM> MatrixX;
@@ -45,11 +45,14 @@ private:
 
 public:
 	int max_iters;
+	bool show_denom_warning; // Print out warning for zero denominators
 
-	LBFGS( int max_iters_=30 ) : max_iters(max_iters_) {}
+	LBFGS() : max_iters(50), show_denom_warning(false) {}
+	void set_max_iters( int iters ){ max_iters = iters; }
+	void set_verbose( int v ){ show_denom_warning = v > 0 ? true : false; }
 
 	// Returns number of iterations used
-	inline int minimize(Problem<Scalar,DIM> &problem, VectorX &x){
+	int minimize(Problem<Scalar,DIM> &problem, VectorX &x){
 
 		int dim = x.rows();
 		MatrixM s = MatrixM::Zero(dim,M);
@@ -101,7 +104,11 @@ public:
 
 			Scalar rate =
 				Armijo<Scalar, DIM, decltype(problem)>::linesearch(x, -q, problem, alpha_init);
-//				MoreThuente<Scalar, DIM, decltype(problem)>::linesearch(x, -q, problem, alpha_init);
+
+			if( rate <= 0 ){
+				printf("LBFGS::minimize: Failure in linesearch");
+				return Minimizer<Scalar,DIM>::FAILURE;
+			}
 
 			x = x - rate * q;
 			if( problem.converged(x,grad) ){ break; }
@@ -123,7 +130,12 @@ public:
 			}
 		
 			Scalar denom = y_temp.dot(y_temp);
-			if(denom <= 0){ break; }
+			if( std::abs(denom) <= 0 ){
+				if( show_denom_warning ){
+					printf("L-BFGS Warning: Encountered a zero denominator\n");
+				}
+				break;
+			}
 			gamma_k = s_temp.dot(y_temp) / denom;
 			alpha_init = 1.0;
 

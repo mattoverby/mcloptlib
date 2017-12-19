@@ -19,64 +19,23 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef MCL_NONLINEARCG_H
-#define MCL_NONLINEARCG_H
+#ifndef MCL_MINIMIZER_H
+#define MCL_MINIMIZER_H
 
-#include "Armijo.hpp"
-#include "Minimizer.hpp"
+#include "Problem.hpp"
 
 namespace mcl {
 namespace optlib {
 
 template<typename Scalar, int DIM>
-class NonLinearCG : public Minimizer<Scalar,DIM> {
-private:
-	typedef Eigen::Matrix<Scalar,DIM,1> VectorX;
-	typedef Eigen::Matrix<Scalar,DIM,DIM> MatrixX;
-
+class Minimizer {
 public:
-	int max_iters;
+	typedef Eigen::Matrix<Scalar,DIM,1> VectorX;
+	static const int FAILURE = -1; // returned by minimize if an error is encountered
 
-	NonLinearCG() : max_iters(100) {}
-	void set_max_iters( int iters ){ max_iters = iters; }
-	void set_verbose( int v ){ (void)(v); } // TODO
-
-	int minimize(Problem<Scalar,DIM> &problem, VectorX &x){
-
-		VectorX grad, grad_old, p;
-		if( DIM == Eigen::Dynamic ){
-			int dim = x.rows();
-			grad.resize(dim);
-			grad_old.resize(dim);
-			p.resize(dim);
-		}
-
-		int iter=0;
-		for( ; iter<max_iters; ++iter ){
-
-			problem.gradient(x, grad);
-
-			if( iter==0 ){ p = -grad; }
-			else {
-				Scalar beta = grad.dot(grad) / (grad_old.dot(grad_old));
-				p = -grad + beta*p;
-			}
-
-			Scalar alpha = Armijo<Scalar, DIM, decltype(problem)>::linesearch(x, p, problem, 1);
-
-			if( alpha <= 0 ){
-				printf("NonLinearCG::minimize: Failure in linesearch");
-				return Minimizer<Scalar,DIM>::FAILURE;
-			}
-
-			x = x + alpha*p;
-			grad_old = grad;
-
-			if( problem.converged(x,grad) ){ break; }
-		}
-		return iter;
-	} // end minimize
-
+	virtual void set_max_iters( int iters ) = 0;
+	virtual void set_verbose( int v ) = 0;
+	virtual int minimize(Problem<Scalar,DIM> &problem, VectorX &x) = 0;
 };
 
 } // ns optlib
