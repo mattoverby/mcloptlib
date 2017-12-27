@@ -33,29 +33,32 @@ namespace optlib {
 template<typename Scalar, int DIM>
 class Problem {
 private:
-	typedef Eigen::Matrix<Scalar,DIM,1> VectorX;
-	typedef Eigen::Matrix<Scalar,DIM,DIM> MatrixX;
+	typedef Eigen::Matrix<Scalar,DIM,1> VecX;
+	typedef Eigen::Matrix<Scalar,DIM,DIM> MatX;
 
 public:
 	// Returns true if the solver has converged
-	virtual bool converged(const VectorX &x, const VectorX &grad) = 0;
+	// x0 is the result of the previous iteration
+	// x1 is the result at the current iteration
+	// grad is the gradient at the last iteration
+	virtual bool converged(const VecX &x0, const VecX &x1, const VecX &grad) = 0;
 
 	// Compute just the value
-	virtual Scalar value(const VectorX &x) = 0;
+	virtual Scalar value(const VecX &x) = 0;
 
 	// Compute the objective value and the gradient
-	virtual Scalar gradient(const VectorX &x, VectorX &grad){
+	virtual Scalar gradient(const VecX &x, VecX &grad){
 		finiteGradient(x, grad);
 		return value(x);
 	}
 
 	// Compute hessian
-	virtual void hessian(const VectorX &x, MatrixX &hessian){
+	virtual void hessian(const VecX &x, MatX &hessian){
 		finiteHessian(x, hessian);
 	}
 
 	// Gradient with finite differences
-	inline void finiteGradient(const VectorX &x, VectorX &grad){
+	inline void finiteGradient(const VecX &x, VecX &grad){
 		const int accuracy = 0; // accuracy can be 0, 1, 2, 3
 		const Scalar eps = 2.2204e-6;
 		const std::vector< std::vector<Scalar> > coeff =
@@ -63,11 +66,11 @@ public:
 		const std::vector< std::vector<Scalar> > coeff2 =
 		{ {1, -1}, {-2, -1, 1, 2}, {-3, -2, -1, 1, 2, 3}, {-4, -3, -2, -1, 1, 2, 3, 4} };
 		const std::vector<Scalar> dd = {2, 12, 60, 840};
-		VectorX finiteDiff(DIM);
+		VecX finiteDiff(DIM);
 		for(int d = 0; d < DIM; ++d){
 			finiteDiff[d] = 0;
 			for (int s = 0; s < 2*(accuracy+1); ++s){
-				VectorX xx = x.eval();
+				VecX xx = x.eval();
 				xx[d] += coeff2[accuracy][s]*eps;
 				finiteDiff[d] += coeff[accuracy][s]*value(xx);
 			}
@@ -77,11 +80,11 @@ public:
 	} // end finite grad
 
 	// Hessian with finite differences
-	inline void finiteHessian(const VectorX &x, MatrixX &hess){
+	inline void finiteHessian(const VecX &x, MatX &hess){
 		const Scalar eps = std::numeric_limits<Scalar>::epsilon()*10e7;
 		for(int i = 0; i < DIM; ++i){
 			for(int j = 0; j < DIM; ++j){
-				VectorX xx = x;
+				VecX xx = x;
 				Scalar f4 = value(xx);
 				xx[i] += eps;
 				xx[j] += eps;

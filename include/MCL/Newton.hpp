@@ -43,10 +43,11 @@ public:
 
 	int minimize(Problem<Scalar,DIM> &problem, VectorX &x){
 
-		VectorX grad, delta_x;
+		VectorX grad, delta_x, x_last;
 		MatrixX hess;
 		if( DIM  == Eigen::Dynamic ){
 			int dim = x.rows();
+			x_last.resize(dim);
 			grad.resize(dim);
 			hess.resize(dim,dim);
 			delta_x.resize(dim);
@@ -73,8 +74,9 @@ public:
 				return Minimizer<Scalar,DIM>::FAILURE;
 			}
 
+			x_last = x;
 			x += rate * delta_x;
-			if( problem.converged(x,grad) ){ break; }
+			if( problem.converged(x_last,x,grad) ){ break; }
 		}
 
 		return iter;

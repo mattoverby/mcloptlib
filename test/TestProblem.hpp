@@ -36,8 +36,8 @@ public:
 	}
 
 	int dim() const { return b.rows(); }
-	bool converged(const VectorX &x, const VectorX &grad){
-		(void)(x);
+	bool converged(const VectorX &x0, const VectorX &x1, const VectorX &grad){
+		(void)(x1); (void)(x0);
 		return grad.norm() < 1e-10;
 	}
 	double value(const VectorX &x){ return (A*x-b).norm(); }
@@ -48,8 +48,9 @@ public:
 class Rosenbrock : public mcl::optlib::Problem<double,2> {
 public:
 	typedef Eigen::Matrix<double,2,1> VectorX;
-	bool converged(const VectorX &x, const VectorX &grad){
-		(void)(x); return grad.norm() < 1e-10;
+	bool converged(const VectorX &x0, const VectorX &x1, const VectorX &grad){
+		(void)(x1); (void)(x0);
+		return grad.norm() < 1e-10;
 	}
 	double value(const VectorX &x){
 		double a = 1.0 - x[0];

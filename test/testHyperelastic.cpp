@@ -95,9 +95,8 @@ public:
 			k*I; // quad penalty
 	}
 
-	bool converged(const Vec3 &x, const Vec3 &grad){
-//		(void)(x); return grad.norm() < 1e-10;
-		(void)(x); (void)(grad); return false; // keep going until max iters
+	bool converged(const Vec3 &x0, const Vec3 &x1, const Vec3 &grad){
+		return ( grad.norm() < 1e-10 || (x1-x0).norm() < 1e-10 );
 	}
 };
 
@@ -143,9 +142,8 @@ public:
 		return value(x);
 	}
 
-	bool converged(const Vec3 &x, const Vec3 &grad){
-//		(void)(x); return grad.norm() < 1e-10;
-		(void)(x); (void)(grad); return false; // keep going until max iters
+	bool converged(const Vec3 &x0, const Vec3 &x1, const Vec3 &grad){
+		return ( grad.norm() < 1e-10 || (x1-x0).norm() < 1e-10 );
 	}
 };
 

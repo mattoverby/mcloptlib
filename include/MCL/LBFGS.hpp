@@ -63,6 +63,7 @@ public:
 		VectorX q = VectorX::Zero(dim);
 		VectorX grad_old = VectorX::Zero(dim);
 		VectorX x_old = VectorX::Zero(dim);
+		VectorX x_last = VectorX::Zero(dim);
 
 		problem.gradient(x, grad);
 		Scalar gamma_k = 1.0;
@@ -110,8 +111,9 @@ public:
 				return Minimizer<Scalar,DIM>::FAILURE;
 			}
 
-			x = x - rate * q;
-			if( problem.converged(x,grad) ){ break; }
+			x_last = x;
+			x -= rate * q;
+			if( problem.converged(x_last,x,grad) ){ break; }
 
 			problem.gradient(x,grad);
 			VectorX s_temp = x - x_old;

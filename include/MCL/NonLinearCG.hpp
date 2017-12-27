@@ -43,9 +43,10 @@ public:
 
 	int minimize(Problem<Scalar,DIM> &problem, VectorX &x){
 
-		VectorX grad, grad_old, p;
+		VectorX grad, grad_old, p, x_last;
 		if( DIM == Eigen::Dynamic ){
 			int dim = x.rows();
+			x_last.resize(dim);
 			grad.resize(dim);
 			grad_old.resize(dim);
 			p.resize(dim);
@@ -69,10 +70,11 @@ public:
 				return Minimizer<Scalar,DIM>::FAILURE;
 			}
 
-			x = x + alpha*p;
+			x_last = x;
+			x += alpha*p;
 			grad_old = grad;
 
-			if( problem.converged(x,grad) ){ break; }
+			if( problem.converged(x_last,x,grad) ){ break; }
 		}
 		return iter;
 	} // end minimize
