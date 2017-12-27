@@ -47,40 +47,40 @@ public:
 	double energy_density(const Vec3 &x) const {
 		double J = x[0]*x[1]*x[2];
 		double I_1 = x[0]*x[0]+x[1]*x[1]+x[2]*x[2];
-		double logJ = std::log(J);
-		double t1 = 0.5 * mu * ( I_1 - 3.0 ) - mu * logJ;
-		double t2 = 0.5 * lambda * logJ * logJ;
-		return ( t1 + t2 );
+		double I_3 = J*J;
+		double log_I3 = std::log( I_3 );
+		double t1 = 0.5 * mu * ( I_1 - log_I3 - 3.0 );
+		double t2 = 0.125 * lambda * log_I3 * log_I3;
+		double r = t1 + t2;
+		return r;
 	}
 
 	double value(const Vec3 &x){
 		if( x[0]<0.0 || x[1]<0.0 || x[2]<0.0 ){
 			// No Mr. Linesearch, you have gone too far!
-			return std::numeric_limits<double>::max();
+			return std::numeric_limits<float>::max();
 		}
 		double t1 = energy_density(x); // U(Dx)
 		double t2 = (k*0.5) * (x-x0).squaredNorm(); // quad penalty
-		return ( t1 + t2 );
+		return t1 + t2;
 	}
 
 	double gradient(const Vec3 &x, Vec3 &grad){
 		double J = x[0]*x[1]*x[2];
-		if( J <= 0.0 ){ throw std::runtime_error("BAD DET IN GRADIENT CALC"); }
-		else {
-			Vec3 inv_x(1.0/x[0],1.0/x[1],1.0/x[2]);
-			grad = (mu * (x - inv_x) + lambda * log(J) * inv_x) + k*(x-x0);
-
-//std::cout << "grad: " << grad.transpose() << std::endl;
-//std::cout << "x: " << x.transpose() << std::endl;
-//std::cout << std::endl;
-
+		if( J <= 0.0 ){
+			throw std::runtime_error("BAD DET IN GRAD");
+		} else {
+			Eigen::Vector3d invSigma(1.0/x[0],1.0/x[1],1.0/x[2]);
+			grad = (mu * (x - invSigma) + lambda * std::log(J) * invSigma) + k*(x-x0);
 		}
 		return value(x);
 	}
 
 	void hessian(const Vec3 &x, Mat3 &hess){
 		double det = x[0]*x[1]*x[2]; // J
-		if( det <= 0.0 ){ throw std::runtime_error("BAD DET IN HESSIAN CALC"); }
+		if( det <= 0.0 ){
+			throw std::runtime_error("BAD DET IN HESSIAN");
+		}
 
 		Vec3 inv_x(1.0/x[0],1.0/x[1],1.0/x[2]);
 		Mat3 invXSqMat = Mat3::Zero();
