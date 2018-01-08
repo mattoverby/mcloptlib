@@ -57,6 +57,33 @@ public:
 		finiteHessian(x, hessian);
 	}
 
+	// Solve dx = H^-1 g (used by Newton's)
+	virtual void solve_hessian(const VecX &x, const VecX &grad, VecX &dx){
+		MatX hess;
+		if( DIM  == Eigen::Dynamic ){
+			int dim = x.rows();
+			hess = MatX::Zero(dim,dim);
+		}
+		hessian(x,hess); // hessian at x_n
+
+		// Going with with high-accurate, low requirements as default factorization for lin-solve
+		// Copied from https://eigen.tuxfamily.org/dox/group__TutorialLinearAlgebra.html
+		//	Method			Requirements	Spd (sm)	Spd (lg)	Accuracy
+		//	partialPivLu()		Invertible	++		++		+
+		//	fullPivLu()		None		-		- -		+++
+		//	householderQr()		None		++		++		+
+		//	colPivHouseholderQr()	None		++		-		+++
+		//	fullPivHouseholderQr()	None		-		- -		+++
+		//	llt()			PD		+++		+++		+
+		//	ldlt()			P/N SD 		+++		+		++
+		if( DIM == Eigen::Dynamic || DIM > 4 ){
+			dx = hess.fullPivLu().solve(-grad);
+		}
+		else {
+			dx = -hess.inverse()*grad;
+		}
+	}
+
 	// Gradient with finite differences
 	inline void finiteGradient(const VecX &x, VecX &grad){
 		const int accuracy = 0; // accuracy can be 0, 1, 2, 3

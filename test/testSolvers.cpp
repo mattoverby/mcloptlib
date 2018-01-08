@@ -28,40 +28,58 @@
 
 using namespace mcl::optlib;
 typedef std::shared_ptr< Minimizer<double,2> > MinPtr2; // rb
-typedef std::shared_ptr< Minimizer<double,Eigen::Dynamic> > MinPtrD; // cp
+typedef std::shared_ptr< Minimizer<double,Eigen::Dynamic> > MinPtrD; // linear
 
 bool test_linear( std::vector<MinPtrD> &solvers, std::vector<std::string> &names ){
 
-	// Higher dimensional, linear, and Eigen::Dynamic
-	const int dim = 16;
-	DynProblem cp(dim);
 	typedef Eigen::Matrix<double,Eigen::Dynamic,1> VecX;
 	bool success = true;
 
-	int n_solvers = solvers.size();
-	for( int i=0; i<n_solvers; ++i ){
-		// Special case for Newtons: should converge in 1 iter because its 2nd order
-		if( names[i] == "newton" ){ solvers[i]->set_max_iters(1); }
-		else { solvers[i]->set_max_iters(100); }
-		solvers[i]->set_verbose(1);
-		VecX x = VecX::Zero(dim);
+	// Using multiple dimensions in the linear case, which changes
+	// how Newton's performs a solve.
+	std::vector<int> test_dims = { 4, 16, 64 };
 
-		solvers[i]->minimize( cp, x );
-		for( int i=0; i<dim; ++i ){
-			if( std::isnan(x[i]) || std::isinf(x[i]) ){
-				std::cerr << "(" << names[i] << ") Bad values in x: " << x[i] << std::endl;
-				success = false;
+	int n_test_dims = test_dims.size();
+	for( int i=0; i<n_test_dims; ++ i ){
+
+		std::cout << std::endl;
+		int dim = test_dims[i];
+
+		// High/Low dimensions, linear, and Eigen::Dynamic.
+		// The solvers should work, since the Vecs/Mats are resized at run time.
+		DynProblem cp(dim);
+
+		int n_solvers = solvers.size();
+		for( int i=0; i<n_solvers; ++i ){
+			bool curr_success = true;
+
+			// Special case for Newtons: should converge in 1 iter because its 2nd order
+			if( names[i] == "newton" ){ solvers[i]->set_max_iters(1); }
+			else { solvers[i]->set_max_iters(100); }
+			solvers[i]->set_verbose(1);
+			VecX x = VecX::Zero(dim);
+
+			solvers[i]->minimize( cp, x );
+			for( int i=0; i<dim; ++i ){
+				if( std::isnan(x[i]) || std::isinf(x[i]) ){
+					std::cerr << "(" << names[i] << ") Bad values in x: " << x[i] << std::endl;
+					curr_success = false;
+				}
 			}
-		}
-		VecX r = cp.A*x - cp.b;
-		double rn = r.norm(); // x should minimize |Ax-b|
-		if( rn > 1e-4 ){
-			std::cerr << "(" << names[i] << ") Failed to minimize: |Ax-b| = " << rn << std::endl;
-			success = false;
-		}
-	}
+			VecX r = cp.A*x - cp.b;
+			double rn = r.norm(); // x should minimize |Ax-b|
+			if( rn > 1e-4 ){
+				std::cerr << "(" << names[i] << ") Failed to minimize: |Ax-b| = " << rn << std::endl;
+				curr_success = false;
+			}
 
-	if( success ){ std::cout << "Linear: Success" << std::endl; }
+			if( curr_success ){ std::cout << "(" << names[i] << ") Linear (" << dim << "): Success" << std::endl; }
+			else{ success = false; }
+
+		} // end loop solvers
+
+	} // end loop test dims
+
 	return success;
 
 }
@@ -71,9 +89,11 @@ bool test_rb( std::vector<MinPtr2> &solvers, std::vector<std::string> &names ){
 
 	Rosenbrock rb; // Dim = 2, also tests finite gradient/hessian
 	bool success = true;
+	std::cout << std::endl;
 
 	int n_solvers = solvers.size();
 	for( int i=0; i<n_solvers; ++i ){
+		bool curr_success = true;
 
 		solvers[i]->set_max_iters(1000);
 		solvers[i]->set_verbose(1);
@@ -83,18 +103,20 @@ bool test_rb( std::vector<MinPtr2> &solvers, std::vector<std::string> &names ){
 		for( int i=0; i<2; ++i ){
 			if( std::isnan(x[i]) || std::isinf(x[i]) ){
 				std::cerr << "(" << names[i] << ") Bad values in x: " << x[i] << std::endl;
-				success = false;
+				curr_success = false;
 			}
 		}
 
 		double rn = (Eigen::Vector2d(1,1) - x).norm();
 		if( rn > 1e-4 ){
 			std::cerr << "(" << names[i] << ") Failed to minimize: Rosenbrock = " << rn << std::endl;
-			success = false;
+			curr_success = false;
 		}
+
+		if( curr_success ){ std::cout << "(" << names[i] << ") Rosenbrock: Success" << std::endl; }
+		else{ success = false; }
 	}
 
-	if( success ){ std::cout << "Rosenbrock: Success" << std::endl; }
 	return success;
 }
 
@@ -107,6 +129,7 @@ int main(int argc, char *argv[] ){
 
 	std::string mode = "all";
 	if( argc == 2 ){ mode = std::string(argv[1]); }
+
 	if( mode=="lbfgs" || mode=="all" ){
 		min2.emplace_back( std::make_shared< LBFGS<double,2> >( LBFGS<double,2>() ) );
 		minD.emplace_back( std::make_shared< LBFGS<double,Eigen::Dynamic> >( LBFGS<double,Eigen::Dynamic>() ) );
@@ -127,9 +150,10 @@ int main(int argc, char *argv[] ){
 	success &= test_linear( minD, names );
 	success &= test_rb( min2, names );
 	if( success ){
-		std::cout << "Success" << std::endl;
+		std::cout << "\nSUCCESS!" << std::endl;
 		return EXIT_SUCCESS;
 	}
+	else{ std::cout << "\n**FAILURE!" << std::endl; }
 	return EXIT_FAILURE;
 }
 

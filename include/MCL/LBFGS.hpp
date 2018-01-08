@@ -38,10 +38,13 @@ namespace optlib {
 template<typename Scalar, int DIM, int M=8>
 class LBFGS : public Minimizer<Scalar,DIM> {
 private:
-	typedef Eigen::Matrix<Scalar,DIM,1> VectorX;
-	typedef Eigen::Matrix<Scalar,DIM,DIM> MatrixX;
-	typedef Eigen::Matrix<Scalar,DIM,M> MatrixM;
-	typedef Eigen::Matrix<Scalar,M,1> VectorM;
+//	typedef Eigen::Matrix<Scalar,DIM,1> VectorX;
+//	typedef Eigen::Matrix<Scalar,DIM,M> MatrixM;
+//	typedef Eigen::Matrix<Scalar,M,1> VectorM;
+
+	typedef Eigen::Matrix<Scalar,DIM,1> VecX;
+	typedef Eigen::Matrix<Scalar,DIM,M> MatM;
+	typedef Eigen::Matrix<Scalar,M,1> VecM;
 
 public:
 	int max_iters;
@@ -52,18 +55,24 @@ public:
 	void set_verbose( int v ){ show_denom_warning = v > 0 ? true : false; }
 
 	// Returns number of iterations used
-	int minimize(Problem<Scalar,DIM> &problem, VectorX &x){
+	int minimize(Problem<Scalar,DIM> &problem, VecX &x){
 
-		int dim = x.rows();
-		MatrixM s = MatrixM::Zero(dim,M);
-		MatrixM y = MatrixM::Zero(dim,M);
-		VectorM alpha = VectorM::Zero(M);
-		VectorM rho = VectorM::Zero(M);
-		VectorX grad = VectorX::Zero(dim);
-		VectorX q = VectorX::Zero(dim);
-		VectorX grad_old = VectorX::Zero(dim);
-		VectorX x_old = VectorX::Zero(dim);
-		VectorX x_last = VectorX::Zero(dim);
+		MatM s, y;
+		VecM alpha, rho;
+		VecX grad, q, grad_old, x_old, x_last;
+
+		if( DIM==Eigen::Dynamic ){
+			int dim = x.rows();
+			s = MatM::Zero(dim,M);
+			y = MatM::Zero(dim,M);
+			alpha = VecM::Zero(M);
+			rho = VecM::Zero(M);
+			grad = VecX::Zero(dim);
+			q = VecX::Zero(dim);
+			grad_old = VecX::Zero(dim);
+			x_old = VecX::Zero(dim);
+			x_last = VecX::Zero(dim);
+		}
 
 		problem.gradient(x, grad);
 		Scalar gamma_k = 1.0;
@@ -116,8 +125,8 @@ public:
 			if( problem.converged(x_last,x,grad) ){ break; }
 
 			problem.gradient(x,grad);
-			VectorX s_temp = x - x_old;
-			VectorX y_temp = grad - grad_old;
+			VecX s_temp = x - x_old;
+			VecX y_temp = grad - grad_old;
 
 			// update the history
 			if(k < M){

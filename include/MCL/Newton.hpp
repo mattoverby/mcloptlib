@@ -44,12 +44,10 @@ public:
 	int minimize(Problem<Scalar,DIM> &problem, VectorX &x){
 
 		VectorX grad, delta_x, x_last;
-		MatrixX hess;
 		if( DIM  == Eigen::Dynamic ){
 			int dim = x.rows();
 			x_last.resize(dim);
 			grad.resize(dim);
-			hess.resize(dim,dim);
 			delta_x.resize(dim);
 		}
 
@@ -57,17 +55,8 @@ public:
 		for( ; iter < max_iters; ++iter ){
 
 			problem.gradient(x,grad);
-			problem.hessian(x,hess);
-
-			if( DIM == Eigen::Dynamic || DIM > 4 ){
-				delta_x = hess.householderQr().solve(-grad);
-			} else {
-				delta_x = -hess.inverse()*grad;
-			}
-
-			Scalar rate =
-				Armijo<Scalar, DIM, decltype(problem)>::linesearch(x, delta_x, problem, 1);
-//				MoreThuente<Scalar, DIM, decltype(problem)>::linesearch(x, delta_x, problem, 1);
+			problem.solve_hessian(x,grad,delta_x);
+			Scalar rate = Armijo<Scalar, DIM, decltype(problem)>::linesearch(x, delta_x, problem, 1);
 
 			if( rate <= 0 ){
 				printf("Newton::minimize: Failure in linesearch\n");
@@ -81,16 +70,6 @@ public:
 
 		return iter;
 	}
-
-// Copied from https://eigen.tuxfamily.org/dox/group__TutorialLinearAlgebra.html
-//	Method			Requirements	Spd (sm)	Spd (lg)	Accuracy
-//	partialPivLu()		Invertible	++		++		+
-//	fullPivLu()		None		-		- -		+++
-//	householderQr()		None		++		++		+
-//	colPivHouseholderQr()	None		++		-		+++
-//	fullPivHouseholderQr()	None		-		- -		+++
-//	llt()			PD		+++		+++		+
-//	ldlt()			P/N SD 		+++		+		++
 
 };
 
