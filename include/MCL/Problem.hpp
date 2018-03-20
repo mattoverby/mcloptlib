@@ -93,9 +93,9 @@ public:
 		const std::vector< std::vector<Scalar> > coeff2 =
 		{ {1, -1}, {-2, -1, 1, 2}, {-3, -2, -1, 1, 2, 3}, {-4, -3, -2, -1, 1, 2, 3, 4} };
 		const std::vector<Scalar> dd = {2, 12, 60, 840};
-		VecX finiteDiff(DIM);
-		for(int d = 0; d < DIM; ++d){
-			finiteDiff[d] = 0;
+		int dim = x.rows();
+		VecX finiteDiff = VecX::Zero(dim);
+		for(int d = 0; d < dim; ++d){
 			for (int s = 0; s < 2*(accuracy+1); ++s){
 				VecX xx = x.eval();
 				xx[d] += coeff2[accuracy][s]*eps;
@@ -109,8 +109,9 @@ public:
 	// Hessian with finite differences
 	inline void finiteHessian(const VecX &x, MatX &hess){
 		const Scalar eps = std::numeric_limits<Scalar>::epsilon()*10e7;
-		for(int i = 0; i < DIM; ++i){
-			for(int j = 0; j < DIM; ++j){
+		int dim = x.rows();
+		for(int i = 0; i < dim; ++i){
+			for(int j = 0; j < dim; ++j){
 				VecX xx = x;
 				Scalar f4 = value(xx);
 				xx[i] += eps;
