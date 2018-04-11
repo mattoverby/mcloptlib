@@ -37,7 +37,7 @@ public:
 	static Scalar linesearch(const VectorX &x, const VectorX &p, P &problem, Scalar alpha_init) {
 
 		const Scalar tau = 0.7;
-		const Scalar beta = 0.3;
+		const Scalar beta = 0.1;
 		const int max_iter = 1000000;
 		Scalar alpha = std::abs(alpha_init);
 		VectorX grad;

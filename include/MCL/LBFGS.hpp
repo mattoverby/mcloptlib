@@ -24,6 +24,7 @@
 
 #include "Armijo.hpp"
 #include "MoreThuente.hpp"
+#include "WolfeBisection.hpp"
 #include "Minimizer.hpp"
 
 namespace mcl {
