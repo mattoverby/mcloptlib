@@ -68,7 +68,7 @@ bool test_linear( std::vector<MinPtrD> &solvers, std::vector<std::string> &names
 			}
 			VecX r = cp.A*x - cp.b;
 			double rn = r.norm(); // x should minimize |Ax-b|
-			if( rn > 1e-4 ){
+			if( rn > 1e-3 ){
 				std::cerr << "(" << names[i] << ") Failed to minimize: |Ax-b| = " << rn << std::endl;
 				curr_success = false;
 			}
