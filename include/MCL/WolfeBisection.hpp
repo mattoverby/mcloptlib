@@ -28,13 +28,13 @@ namespace mcl {
 namespace optlib {
 
 // Bisection method for Weak Wolfe conditions
-template<typename Scalar, int DIM, typename P>
-class WolfeBisection {
+template<typename Scalar, int DIM>
+class WolfeBisection : public Linesearch<Scalar,DIM> {
 public:
 	typedef Eigen::Matrix<Scalar,DIM,1> VecX;
 	typedef Eigen::Matrix<Scalar,DIM,DIM> MatX;
 
-	static Scalar linesearch(const VecX &x, const VecX &p, P &problem, Scalar alpha_init) {
+	Scalar search(const VecX &x, const VecX &p, Problem<Scalar,DIM> &problem, Scalar alpha0) {
 
 		const Scalar c1 = 0.3;
 		const Scalar c2 = 0.6;
@@ -44,7 +44,7 @@ public:
 
 		Scalar low = 0.0;
 		Scalar high = -1.0; // set when needed
-		Scalar alpha = alpha_init;
+		Scalar alpha = alpha0;
 		Scalar alpha_last = 0.0;
 
 		VecX grad0, grad_new;

@@ -23,6 +23,10 @@
 #define MCL_MINIMIZER_H
 
 #include "Problem.hpp"
+#include "Backtracking.hpp"
+#include "MoreThuente.hpp"
+#include "WolfeBisection.hpp"
+#include <memory>
 
 namespace mcl {
 namespace optlib {
@@ -30,12 +34,36 @@ namespace optlib {
 template<typename Scalar, int DIM>
 class Minimizer {
 public:
-	typedef Eigen::Matrix<Scalar,DIM,1> VectorX;
+	typedef Eigen::Matrix<Scalar,DIM,1> VecX;
 	static const int FAILURE = -1; // returned by minimize if an error is encountered
 
-	virtual void set_max_iters( int iters ) = 0;
-	virtual void set_verbose( int v ) = 0;
-	virtual int minimize(Problem<Scalar,DIM> &problem, VectorX &x) = 0;
+	struct Settings {
+		int verbose;
+		int max_iters; // usually set by derived constructors
+		LinesearchMethod ls_method; // see LinesearchMethod
+		Settings() : verbose(0), max_iters(100),
+			ls_method(LinesearchMethod::Backtracking) {}
+	} m_settings;
+
+	//
+	// Performs optimization
+	//
+	virtual int minimize(Problem<Scalar,DIM> &problem, VecX &x) = 0;
+
+
+protected:
+	// Helper function for creating the linesearch object
+	void make_linesearch( std::unique_ptr< Linesearch<Scalar,DIM> > &ptr ){
+		typedef std::unique_ptr< Linesearch<Scalar,DIM> > LSPtr;
+		switch( m_settings.ls_method ){
+			default: { ptr = LSPtr( new Backtracking<Scalar,DIM>() ); } break;
+			case LinesearchMethod::None: { ptr = nullptr; } break;
+			case LinesearchMethod::MoreThuente: { ptr = LSPtr( new MoreThuente<Scalar,DIM>() ); } break;
+			case LinesearchMethod::Backtracking: { ptr = LSPtr( new Backtracking<Scalar,DIM>() ); } break;
+			case LinesearchMethod::BacktrackingCurvature: { ptr = LSPtr( new BacktrackingCurvature<Scalar,DIM>() ); } break;
+			case LinesearchMethod::WeakWolfeBisection: { ptr = LSPtr( new WolfeBisection<Scalar,DIM>() ); } break;
+		}
+	}
 };
 
 } // ns optlib

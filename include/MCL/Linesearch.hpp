@@ -19,62 +19,42 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef MCL_NEWTON_H
-#define MCL_NEWTON_H
+#ifndef MCL_LINESEARCH_H
+#define MCL_LINESEARCH_H
 
-#include "Minimizer.hpp"
+#include "Problem.hpp"
 
 namespace mcl {
 namespace optlib {
 
+// The different line search methods currently implemented
+enum class LinesearchMethod {
+	None = 0, // use step length = 1, not recommended, like, ever.
+	MoreThuente, // TODO test this one for correctness
+	Backtracking, // basic backtracking with sufficient decrease
+	BacktrackingCurvature, // backtracking with cubic interpolation
+	WeakWolfeBisection // slow
+};
+
 template<typename Scalar, int DIM>
-class Newton : public Minimizer<Scalar,DIM> {
-private:
-	typedef Eigen::Matrix<Scalar,DIM,1> VectorX;
-	typedef Eigen::Matrix<Scalar,DIM,DIM> MatrixX;
-	typedef std::unique_ptr< Linesearch<Scalar,DIM> > LSPtr;
-
+class Linesearch {
 public:
-	LSPtr m_linesearch;
+	typedef Eigen::Matrix<Scalar,DIM,1> VecX;
+	static const int FAILURE = -1; // returned by line if an error is encountered
 
-	Newton() {
-		this->m_settings.max_iters = 20;
-		this->make_linesearch( m_linesearch );
-	}
+	struct Settings {
+		Scalar sufficientDecrease; // sufficient decrease (Armijo)
+		int max_iters;
+		Settings() : sufficientDecrease(1e-4), max_iters(1e6) {}
+	} m_settings;
 
-	int minimize(Problem<Scalar,DIM> &problem, VectorX &x){
-
-		VectorX grad, delta_x, x_last;
-		if( DIM  == Eigen::Dynamic ){
-			int dim = x.rows();
-			x_last.resize(dim);
-			grad.resize(dim);
-			delta_x.resize(dim);
-		}
-
-		int max_iters = this->m_settings.max_iters;
-		int iter = 0;
-		for( ; iter < max_iters; ++iter ){
-
-			problem.gradient(x,grad);
-			problem.solve_hessian(x,grad,delta_x);
-
-			Scalar rate = 1.0;
-			if( m_linesearch ){ rate = m_linesearch->search(x, delta_x, problem, 1.0); }
-
-			if( rate <= 0 ){
-				printf("Newton::minimize: Failure in linesearch\n");
-				return Minimizer<Scalar,DIM>::FAILURE;
-			}
-
-			x_last = x;
-			x += rate * delta_x;
-			if( problem.converged(x_last,x,grad) ){ break; }
-		}
-
-		return iter;
-	}
-
+	// Perform line search with:
+	// x = opt variable
+	// p = descent direction
+	// problem = optimization function
+	// alpha0 = initial line search guess
+	virtual Scalar search(const VecX &x, const VecX &p, Problem<Scalar,DIM> &problem, Scalar alpha0) = 0;
+	
 };
 
 } // ns optlib

@@ -25,24 +25,25 @@
 #define MCL_MORETHUENTE_H
 
 #include "Problem.hpp"
+#include "Linesearch.hpp"
 
 namespace mcl {
 namespace optlib {
 
-template<typename Scalar, int DIM, typename P>
-class MoreThuente {
+template<typename Scalar, int DIM>
+class MoreThuente : public Linesearch<Scalar,DIM> {
 private:
 	typedef Eigen::Matrix<Scalar,DIM,1> VectorX;
 
 public:
 
-	static Scalar linesearch(const VectorX &x, const VectorX &p, P &problem, Scalar alpha_init){
-		Scalar alpha = std::abs(alpha_init);
+	Scalar search(const VectorX &x, const VectorX &p, Problem<Scalar,DIM> &problem, Scalar alpha0){
+		Scalar alpha = alpha0;
 		cvsrch(problem, x, alpha, p);
 		return alpha;
 	}
 
-	static void cvsrch(P &problem, const VectorX &x0, Scalar &stp, const VectorX &s) {
+	static void cvsrch(Problem<Scalar,DIM> &problem, const VectorX &x0, Scalar &stp, const VectorX &s) {
 		int info           = 0;
 		int infoc          = 1;
 		const Scalar xtol   = 1e-15;

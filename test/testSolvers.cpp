@@ -54,9 +54,9 @@ bool test_linear( std::vector<MinPtrD> &solvers, std::vector<std::string> &names
 			bool curr_success = true;
 
 			// Special case for Newtons: should converge in 1 iter because its 2nd order
-			if( names[i] == "newton" ){ solvers[i]->set_max_iters(1); }
-			else { solvers[i]->set_max_iters(100); }
-			solvers[i]->set_verbose(1);
+			if( names[i] == "newton" ){ solvers[i]->m_settings.max_iters = 1; }
+			else { solvers[i]->m_settings.max_iters = 100; }
+			solvers[i]->m_settings.verbose = 1;
 			VecX x = VecX::Zero(dim);
 
 			solvers[i]->minimize( cp, x );
@@ -95,8 +95,8 @@ bool test_rb( std::vector<MinPtr2> &solvers, std::vector<std::string> &names ){
 	for( int i=0; i<n_solvers; ++i ){
 		bool curr_success = true;
 
-		solvers[i]->set_max_iters(1000);
-		solvers[i]->set_verbose(1);
+		solvers[i]->m_settings.max_iters = 1000;
+		solvers[i]->m_settings.verbose = 1;
 		Eigen::Vector2d x = Eigen::Vector2d::Zero();
 		solvers[i]->minimize( rb, x );
 

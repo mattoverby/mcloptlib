@@ -167,8 +167,8 @@ int main(){
 	int n_solvers = solver_list.size();
 	for( int i=0; i<n_solvers; ++i ){
 
-		solver_list[i]->set_max_iters(100);
-		solver_list[i]->set_verbose(1);
+		solver_list[i]->m_settings.max_iters = 100;
+		solver_list[i]->m_settings.verbose = 1;
 
 		Eigen::Vector3d x; // init guess and final solution
 		int iters = -1; // <= 0 is an error

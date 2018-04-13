@@ -22,9 +22,6 @@
 #ifndef MCL_LBFGS_H
 #define MCL_LBFGS_H
 
-#include "Armijo.hpp"
-#include "MoreThuente.hpp"
-#include "WolfeBisection.hpp"
 #include "Minimizer.hpp"
 
 namespace mcl {
@@ -39,21 +36,20 @@ namespace optlib {
 template<typename Scalar, int DIM, int M=8>
 class LBFGS : public Minimizer<Scalar,DIM> {
 private:
-//	typedef Eigen::Matrix<Scalar,DIM,1> VectorX;
-//	typedef Eigen::Matrix<Scalar,DIM,M> MatrixM;
-//	typedef Eigen::Matrix<Scalar,M,1> VectorM;
-
 	typedef Eigen::Matrix<Scalar,DIM,1> VecX;
 	typedef Eigen::Matrix<Scalar,DIM,M> MatM;
 	typedef Eigen::Matrix<Scalar,M,1> VecM;
+	typedef std::unique_ptr< Linesearch<Scalar,DIM> > LSPtr;
 
 public:
-	int max_iters;
 	bool show_denom_warning; // Print out warning for zero denominators
+	LSPtr m_linesearch;
 
-	LBFGS() : max_iters(50), show_denom_warning(false) {}
-	void set_max_iters( int iters ){ max_iters = iters; }
-	void set_verbose( int v ){ show_denom_warning = v > 0 ? true : false; }
+	LBFGS() : show_denom_warning(false) {
+		this->m_settings.max_iters = 50;
+		show_denom_warning = this->m_settings.verbose > 0 ? true : false;
+		this->make_linesearch( m_linesearch );
+	}
 
 	// Returns number of iterations used
 	int minimize(Problem<Scalar,DIM> &problem, VecX &x){
@@ -80,9 +76,9 @@ public:
 		Scalar alpha_init = 1.0;
 
 		int global_iter = 0;
-		int maxIter = max_iters;
+		int max_iters = this->m_settings.max_iters;
 
-		for( int k=0; k<maxIter; ++k ){
+		for( int k=0; k<max_iters; ++k ){
 
 			x_old = x;
 			grad_old = grad;
@@ -108,13 +104,15 @@ public:
 			Scalar dir = q.dot(grad);
 			if(dir <= 0 ){
 				q = grad;
-				maxIter -= k;
+				max_iters -= k;
 				k = 0;
 				alpha_init = std::min(1.0, 1.0 / grad.template lpNorm<Eigen::Infinity>() );
 			}
 
-			Scalar rate =
-				Armijo<Scalar, DIM, decltype(problem)>::linesearch(x, -q, problem, alpha_init);
+			Scalar rate = 1.0;
+			if( m_linesearch ){
+				rate = m_linesearch->search(x, -q, problem, alpha_init);
+			}
 
 			if( rate <= 0 ){
 				printf("LBFGS::minimize: Failure in linesearch\n");
