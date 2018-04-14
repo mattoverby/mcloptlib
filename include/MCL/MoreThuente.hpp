@@ -25,19 +25,18 @@
 #define MCL_MORETHUENTE_H
 
 #include "Problem.hpp"
-#include "Linesearch.hpp"
 
 namespace mcl {
 namespace optlib {
 
 template<typename Scalar, int DIM>
-class MoreThuente : public Linesearch<Scalar,DIM> {
+class MoreThuente {
 private:
 	typedef Eigen::Matrix<Scalar,DIM,1> VectorX;
 
 public:
 
-	Scalar search(const VectorX &x, const VectorX &p, Problem<Scalar,DIM> &problem, Scalar alpha0){
+	static inline Scalar search(const VectorX &x, const VectorX &p, Problem<Scalar,DIM> &problem, Scalar alpha0){
 		Scalar alpha = alpha0;
 		cvsrch(problem, x, alpha, p);
 		return alpha;

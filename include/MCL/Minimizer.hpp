@@ -31,6 +31,18 @@
 namespace mcl {
 namespace optlib {
 
+// The different line search methods currently implemented
+enum class LSMethod {
+	None = 0, // use step length = 1, not recommended
+	MoreThuente, // TODO test this one for correctness
+	Backtracking, // basic backtracking with sufficient decrease
+	BacktrackingCurvature, // backtracking with cubic interpolation
+	WeakWolfeBisection // slow
+};
+
+//
+// Base class for optimization algs
+//
 template<typename Scalar, int DIM>
 class Minimizer {
 public:
@@ -38,11 +50,16 @@ public:
 	static const int FAILURE = -1; // returned by minimize if an error is encountered
 
 	struct Settings {
-		int verbose;
-		int max_iters; // usually set by derived constructors
-		LinesearchMethod ls_method; // see LinesearchMethod
+		int verbose; // higher = more printouts
+		int max_iters; // usually changed by derived constructors
+		int ls_max_iters; // max line search iters
+		Scalar ls_decrease; // sufficient decrease param
+		LSMethod ls_method; // see choices (above)
+
 		Settings() : verbose(0), max_iters(100),
-			ls_method(LinesearchMethod::Backtracking) {}
+			ls_max_iters(10000), ls_decrease(1e-4),
+			ls_method(LSMethod::BacktrackingCurvature)
+			{}
 	} m_settings;
 
 	//
@@ -52,19 +69,32 @@ public:
 
 
 protected:
-	// Helper function for creating the linesearch object
-	void make_linesearch( std::unique_ptr< Linesearch<Scalar,DIM> > &ptr ){
-		typedef std::unique_ptr< Linesearch<Scalar,DIM> > LSPtr;
+
+	// Line search method can be changed through m_settings.
+	Scalar linesearch(const VecX &x, const VecX &p, Problem<Scalar,DIM> &prob, double alpha0) const {
+		double alpha = alpha0;
+		int mi = m_settings.ls_max_iters;
+		Scalar sd = m_settings.ls_decrease;
 		switch( m_settings.ls_method ){
-			default: { ptr = LSPtr( new Backtracking<Scalar,DIM>() ); } break;
-			case LinesearchMethod::None: { ptr = nullptr; } break;
-			case LinesearchMethod::MoreThuente: { ptr = LSPtr( new MoreThuente<Scalar,DIM>() ); } break;
-			case LinesearchMethod::Backtracking: { ptr = LSPtr( new Backtracking<Scalar,DIM>() ); } break;
-			case LinesearchMethod::BacktrackingCurvature: { ptr = LSPtr( new BacktrackingCurvature<Scalar,DIM>() ); } break;
-			case LinesearchMethod::WeakWolfeBisection: { ptr = LSPtr( new WolfeBisection<Scalar,DIM>() ); } break;
-		}
-	}
-};
+			default:{ alpha = Backtracking<Scalar,DIM>::search(mi, sd, x, p, prob, alpha0); } break;
+			case LSMethod::None: { alpha = 1.0; } break;
+			case LSMethod::MoreThuente: {
+				alpha = MoreThuente<Scalar,DIM>::search(x, p, prob, alpha0);
+			} break;
+			case LSMethod::Backtracking: {
+				alpha = Backtracking<Scalar,DIM>::search(mi, sd, x, p, prob, alpha0);
+			} break;
+			case LSMethod::BacktrackingCurvature: {
+				alpha = BacktrackingCurvature<Scalar,DIM>::search(mi, sd, x, p, prob, alpha0);
+			} break;
+			case LSMethod::WeakWolfeBisection: {
+				alpha = WolfeBisection<Scalar,DIM>::search(x, p, prob, alpha0);
+			} break;
+		} // end swithc method
+		return alpha;
+	} // end do linesearch
+
+}; // class minimizer
 
 } // ns optlib
 } // ns mcl

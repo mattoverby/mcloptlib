@@ -39,16 +39,13 @@ private:
 	typedef Eigen::Matrix<Scalar,DIM,1> VecX;
 	typedef Eigen::Matrix<Scalar,DIM,M> MatM;
 	typedef Eigen::Matrix<Scalar,M,1> VecM;
-	typedef std::unique_ptr< Linesearch<Scalar,DIM> > LSPtr;
 
 public:
 	bool show_denom_warning; // Print out warning for zero denominators
-	LSPtr m_linesearch;
 
 	LBFGS() : show_denom_warning(false) {
 		this->m_settings.max_iters = 50;
 		show_denom_warning = this->m_settings.verbose > 0 ? true : false;
-		this->make_linesearch( m_linesearch );
 	}
 
 	// Returns number of iterations used
@@ -109,10 +106,7 @@ public:
 				alpha_init = std::min(1.0, 1.0 / grad.template lpNorm<Eigen::Infinity>() );
 			}
 
-			Scalar rate = 1.0;
-			if( m_linesearch ){
-				rate = m_linesearch->search(x, -q, problem, alpha_init);
-			}
+			Scalar rate = this->linesearch(x, -q, problem, alpha_init);
 
 			if( rate <= 0 ){
 				printf("LBFGS::minimize: Failure in linesearch\n");

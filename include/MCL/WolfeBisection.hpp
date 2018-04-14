@@ -29,12 +29,12 @@ namespace optlib {
 
 // Bisection method for Weak Wolfe conditions
 template<typename Scalar, int DIM>
-class WolfeBisection : public Linesearch<Scalar,DIM> {
+class WolfeBisection {
 public:
 	typedef Eigen::Matrix<Scalar,DIM,1> VecX;
 	typedef Eigen::Matrix<Scalar,DIM,DIM> MatX;
 
-	Scalar search(const VecX &x, const VecX &p, Problem<Scalar,DIM> &problem, Scalar alpha0) {
+	static inline Scalar search(const VecX &x, const VecX &p, Problem<Scalar,DIM> &problem, Scalar alpha0) {
 
 		const Scalar c1 = 0.3;
 		const Scalar c2 = 0.6;
@@ -77,6 +77,11 @@ public:
 			// Not perfectly safe, but probably fine?
 			if( std::abs(alpha-alpha_last) < minChange ){ break; }
 			alpha_last = alpha;
+		}
+
+		if( iter == max_iter ){
+			printf("Backtracking::linesearch Error: Reached max_iters\n");
+			return -1;
 		}
 
 		return alpha;

@@ -23,7 +23,6 @@
 #define MCL_BACKTRACKING_H
 
 #include "Problem.hpp"
-#include "Linesearch.hpp"
 
 namespace mcl {
 namespace optlib {
@@ -68,15 +67,13 @@ namespace internal {
 // Backtracking-Armijo with optional curvature (weak wolfe II) interpolation
 //
 template<typename Scalar, int DIM>
-class Backtracking : public Linesearch<Scalar,DIM> {
+class Backtracking {
 public:
 	typedef Eigen::Matrix<Scalar,DIM,1> VecX;
 
-	inline Scalar search(const VecX &x, const VecX &p, Problem<Scalar,DIM> &problem, Scalar alpha0) {
+	static inline Scalar search(int max_iters, Scalar decrease, const VecX &x, const VecX &p, Problem<Scalar,DIM> &problem, Scalar alpha0) {
 
-		const Scalar tau = 0.7; // used if curvature = false
-		const Scalar beta = this->m_settings.sufficientDecrease;
-		const int max_iter = this->m_settings.max_iters;
+		const Scalar tau = 0.7;
 		Scalar alpha = alpha0;
 		VecX grad;
 		if( DIM == Eigen::Dynamic ){ grad = VecX::Zero(x.rows()); }
@@ -84,16 +81,16 @@ public:
 		Scalar gtp = grad.dot(p);
 
 		int iter = 0;
-		for( ; iter < max_iter; ++iter ){
+		for( ; iter < max_iters; ++iter ){
 			Scalar fxa = problem.value(x + alpha*p);
-			Scalar fx0_fxa = fx0 + alpha*beta*gtp; // Armijo condition I
+			Scalar fx0_fxa = fx0 + alpha*decrease*gtp; // Armijo condition I
 			if( fxa <= fx0_fxa ){ break; } // sufficient decrease
 			alpha *= tau;
 		}
 
-		if( iter == max_iter ){
+		if( iter == max_iters ){
 			printf("Backtracking::linesearch Error: Reached max_iters\n");
-			return Linesearch<Scalar,DIM>::FAILURE;
+			return -1;
 		}
 
 		return alpha;
@@ -106,14 +103,12 @@ public:
 // Backtracking-Armijo with curvature (weak wolfe II) interpolation
 //
 template<typename Scalar, int DIM>
-class BacktrackingCurvature : public Linesearch<Scalar,DIM> {
+class BacktrackingCurvature {
 public:
 	typedef Eigen::Matrix<Scalar,DIM,1> VecX;
 
-	inline Scalar search(const VecX &x, const VecX &p, Problem<Scalar,DIM> &problem, Scalar alpha0) {
+	static inline Scalar search(int max_iters, Scalar decrease, const VecX &x, const VecX &p, Problem<Scalar,DIM> &problem, Scalar alpha0) {
 
-		const Scalar beta = this->m_settings.sufficientDecrease;
-		const int max_iter = this->m_settings.max_iters;
 		Scalar alpha = alpha0;
 		VecX grad;
 		if( DIM == Eigen::Dynamic ){ grad = VecX::Zero(x.rows()); }
@@ -123,9 +118,9 @@ public:
 		Scalar alphap = alpha;
 
 		int iter = 0;
-		for( ; iter < max_iter; ++iter ){
+		for( ; iter < max_iters; ++iter ){
 			Scalar fxa = problem.value(x + alpha*p);
-			Scalar fx0_fxa = fx0 + alpha*beta*gtp; // Armijo condition I
+			Scalar fx0_fxa = fx0 + alpha*decrease*gtp; // Armijo condition I
 			if( fxa <= fx0_fxa ){ break; } // sufficient decrease
 
 			Scalar alpha_tmp = iter == 0 ?
@@ -136,9 +131,9 @@ public:
 			alpha = internal::range( alpha_tmp, 0.1*alpha, 0.5*alpha );
 		}
 
-		if( iter == max_iter ){
+		if( iter == max_iters ){
 			printf("BacktrackingCurvature::linesearch Error: Reached max_iters\n");
-			return Linesearch<Scalar,DIM>::FAILURE;
+			return -1;
 		}
 
 		return alpha;

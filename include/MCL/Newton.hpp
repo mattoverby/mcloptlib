@@ -32,14 +32,10 @@ class Newton : public Minimizer<Scalar,DIM> {
 private:
 	typedef Eigen::Matrix<Scalar,DIM,1> VectorX;
 	typedef Eigen::Matrix<Scalar,DIM,DIM> MatrixX;
-	typedef std::unique_ptr< Linesearch<Scalar,DIM> > LSPtr;
 
 public:
-	LSPtr m_linesearch;
-
 	Newton() {
 		this->m_settings.max_iters = 20;
-		this->make_linesearch( m_linesearch );
 	}
 
 	int minimize(Problem<Scalar,DIM> &problem, VectorX &x){
@@ -59,8 +55,7 @@ public:
 			problem.gradient(x,grad);
 			problem.solve_hessian(x,grad,delta_x);
 
-			Scalar rate = 1.0;
-			if( m_linesearch ){ rate = m_linesearch->search(x, delta_x, problem, 1.0); }
+			Scalar rate = this->linesearch(x, delta_x, problem, 1.0);
 
 			if( rate <= 0 ){
 				printf("Newton::minimize: Failure in linesearch\n");
