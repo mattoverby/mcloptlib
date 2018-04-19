@@ -36,10 +36,11 @@ class Backtracking {
 public:
 	typedef Eigen::Matrix<Scalar,DIM,1> VecX;
 
-	static inline Scalar search(int max_iters, Scalar decrease, const VecX &x, const VecX &p, Problem<Scalar,DIM> &problem, Scalar alpha0) {
+	static inline Scalar search(int verbose, int max_iters, Scalar decrease, const VecX &x, const VecX &p, Problem<Scalar,DIM> &problem, Scalar alpha0) {
 
 		// First things first, check descent norm
-		if( p.squaredNorm() <= 0.0 ){ return 1.0; }
+		const Scalar t_eps = std::numeric_limits<Scalar>::epsilon();
+		if( p.norm() <= t_eps ){ return decrease; }
 
 		const Scalar tau = 0.7;
 		Scalar alpha = alpha0;
@@ -57,7 +58,7 @@ public:
 		}
 
 		if( iter >= max_iters ){
-			printf("Backtracking::linesearch Error: Reached max_iters\n");
+			if( verbose > 0 ){ printf("Backtracking::linesearch Error: Reached max_iters\n"); }
 			return -1;
 		}
 
@@ -75,10 +76,11 @@ class BacktrackingCurvature {
 public:
 	typedef Eigen::Matrix<Scalar,DIM,1> VecX;
 
-	static inline Scalar search(int max_iters, Scalar decrease, const VecX &x, const VecX &p, Problem<Scalar,DIM> &problem, Scalar alpha0) {
+	static inline Scalar search(int verbose, int max_iters, Scalar decrease, const VecX &x, const VecX &p, Problem<Scalar,DIM> &problem, Scalar alpha0) {
 
 		// First things first, check descent norm
-		if( p.squaredNorm() <= 0.0 ){ return 1.0; }
+		const Scalar t_eps = std::numeric_limits<Scalar>::epsilon();
+		if( p.norm() <= t_eps ){ return decrease; }
 
 		Scalar alpha = alpha0;
 		VecX grad;
@@ -103,7 +105,7 @@ public:
 		}
 
 		if( iter >= max_iters ){
-			printf("BacktrackingCurvature::linesearch Error: Reached max_iters\n");
+			if( verbose > 0 ){ printf("BacktrackingCurvature::linesearch Error: Reached max_iters\n"); }
 			return -1;
 		}
 

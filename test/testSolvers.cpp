@@ -43,7 +43,6 @@ bool test_linear( std::vector<MinPtrD> &solvers, std::vector<std::string> &names
 	int n_test_dims = test_dims.size();
 	for( int i=0; i<n_test_dims; ++ i ){
 
-		std::cout << std::endl;
 		int dim = test_dims[i];
 
 		// High/Low dimensions, linear, and Eigen::Dynamic.
@@ -127,7 +126,7 @@ bool test_zero( std::vector<MinPtrD> &solvers, std::vector<std::string> &names )
 	std::cout << "\nTest zero energy:" << std::endl;
 	typedef Eigen::Matrix<double,Eigen::Dynamic,1> VecX;
 	bool success = true;
-	int dim = 4;
+	int dim = 2;
 
 	// High/Low dimensions, linear, and Eigen::Dynamic.
 	// The solvers should work, since the Vecs/Mats are resized at run time.

@@ -74,18 +74,19 @@ protected:
 	Scalar linesearch(const VecX &x, const VecX &p, Problem<Scalar,DIM> &prob, double alpha0) const {
 		double alpha = alpha0;
 		int mi = m_settings.ls_max_iters;
+		int v = m_settings.verbose;
 		Scalar sd = m_settings.ls_decrease;
 		switch( m_settings.ls_method ){
-			default:{ alpha = Backtracking<Scalar,DIM>::search(mi, sd, x, p, prob, alpha0); } break;
+			default:{ alpha = Backtracking<Scalar,DIM>::search(v, mi, sd, x, p, prob, alpha0); } break;
 			case LSMethod::None: { alpha = 1.0; } break;
 			case LSMethod::MoreThuente: {
 				alpha = MoreThuente<Scalar,DIM>::search(x, p, prob, alpha0);
 			} break;
 			case LSMethod::Backtracking: {
-				alpha = Backtracking<Scalar,DIM>::search(mi, sd, x, p, prob, alpha0);
+				alpha = Backtracking<Scalar,DIM>::search(v, mi, sd, x, p, prob, alpha0);
 			} break;
 			case LSMethod::BacktrackingCurvature: {
-				alpha = BacktrackingCurvature<Scalar,DIM>::search(mi, sd, x, p, prob, alpha0);
+				alpha = BacktrackingCurvature<Scalar,DIM>::search(v, mi, sd, x, p, prob, alpha0);
 			} break;
 			case LSMethod::WeakWolfeBisection: {
 				alpha = WolfeBisection<Scalar,DIM>::search(x, p, prob, alpha0);
