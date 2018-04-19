@@ -75,6 +75,7 @@ public:
 
 		int global_iter = 0;
 		int max_iters = this->m_settings.max_iters;
+		int verbose = this->m_settings.verbose;
 
 		for( int k=0; k<max_iters; ++k ){
 
@@ -110,7 +111,7 @@ public:
 			Scalar rate = this->linesearch(x, -q, problem, alpha_init);
 
 			if( rate <= 0 ){
-				printf("LBFGS::minimize: Failure in linesearch\n");
+				if( verbose > 0 ){ printf("LBFGS::minimize: Failure in linesearch\n"); }
 				return Minimizer<Scalar,DIM>::FAILURE;
 			}
 

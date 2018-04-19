@@ -48,6 +48,7 @@ public:
 			delta_x.resize(dim);
 		}
 
+		int verbose = this->m_settings.verbose;
 		int max_iters = this->m_settings.max_iters;
 		int iter = 0;
 		for( ; iter < max_iters; ++iter ){
@@ -58,7 +59,7 @@ public:
 			Scalar rate = this->linesearch(x, delta_x, problem, 1.0);
 
 			if( rate <= 0 ){
-				printf("Newton::minimize: Failure in linesearch\n");
+				if( verbose > 0 ){ printf("Newton::minimize: Failure in linesearch\n"); }
 				return Minimizer<Scalar,DIM>::FAILURE;
 			}
 

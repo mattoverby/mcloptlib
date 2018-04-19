@@ -49,8 +49,9 @@ public:
 			p.resize(dim);
 		}
 
-		int iter=0;
+		int verbose = this->m_settings.verbose;
 		int max_iters = this->m_settings.max_iters;
+		int iter=0;
 		for( ; iter<max_iters; ++iter ){
 
 			problem.gradient(x, grad);
@@ -64,7 +65,7 @@ public:
 			Scalar rate = this->linesearch(x, p, problem, 1.0);
 
 			if( rate <= 0 ){
-				printf("NonLinearCG::minimize: Failure in linesearch\n");
+				if( verbose > 0 ){ printf("NonLinearCG::minimize: Failure in linesearch\n"); }
 				return Minimizer<Scalar,DIM>::FAILURE;
 			}
 
