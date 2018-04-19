@@ -43,7 +43,7 @@ public:
 		VectorX grad, grad_old, p, x_last;
 		if( DIM == Eigen::Dynamic ){
 			int dim = x.rows();
-			x_last.resize(dim);
+			x_last.setZero(dim);
 			grad.resize(dim);
 			grad_old.resize(dim);
 			p.resize(dim);

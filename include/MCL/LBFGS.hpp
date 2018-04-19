@@ -69,6 +69,7 @@ public:
 		}
 
 		problem.gradient(x, grad);
+
 		Scalar gamma_k = 1.0;
 		Scalar alpha_init = 1.0;
 

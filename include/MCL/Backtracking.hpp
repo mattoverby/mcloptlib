@@ -38,6 +38,9 @@ public:
 
 	static inline Scalar search(int max_iters, Scalar decrease, const VecX &x, const VecX &p, Problem<Scalar,DIM> &problem, Scalar alpha0) {
 
+		// First things first, check descent norm
+		if( p.squaredNorm() <= 0.0 ){ return 1.0; }
+
 		const Scalar tau = 0.7;
 		Scalar alpha = alpha0;
 		VecX grad;
@@ -73,6 +76,9 @@ public:
 	typedef Eigen::Matrix<Scalar,DIM,1> VecX;
 
 	static inline Scalar search(int max_iters, Scalar decrease, const VecX &x, const VecX &p, Problem<Scalar,DIM> &problem, Scalar alpha0) {
+
+		// First things first, check descent norm
+		if( p.squaredNorm() <= 0.0 ){ return 1.0; }
 
 		Scalar alpha = alpha0;
 		VecX grad;

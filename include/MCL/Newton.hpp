@@ -54,7 +54,6 @@ public:
 
 			problem.gradient(x,grad);
 			problem.solve_hessian(x,grad,delta_x);
-
 			Scalar rate = this->linesearch(x, delta_x, problem, 1.0);
 
 			if( rate <= 0 ){

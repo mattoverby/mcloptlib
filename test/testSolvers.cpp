@@ -32,6 +32,7 @@ typedef std::shared_ptr< Minimizer<double,Eigen::Dynamic> > MinPtrD; // linear
 
 bool test_linear( std::vector<MinPtrD> &solvers, std::vector<std::string> &names ){
 
+	std::cout << "\nTest linear:" << std::endl;
 	typedef Eigen::Matrix<double,Eigen::Dynamic,1> VecX;
 	bool success = true;
 
@@ -87,9 +88,9 @@ bool test_linear( std::vector<MinPtrD> &solvers, std::vector<std::string> &names
 
 bool test_rb( std::vector<MinPtr2> &solvers, std::vector<std::string> &names ){
 
+	std::cout << "\nTest Rosenbrock:" << std::endl;
 	Rosenbrock rb; // Dim = 2, also tests finite gradient/hessian
 	bool success = true;
-	std::cout << std::endl;
 
 	int n_solvers = solvers.size();
 	for( int i=0; i<n_solvers; ++i ){
@@ -108,7 +109,7 @@ bool test_rb( std::vector<MinPtr2> &solvers, std::vector<std::string> &names ){
 		}
 
 		double rn = (Eigen::Vector2d(1,1) - x).norm();
-		if( rn > 1e-4 ){
+		if( rn > 1e-8 ){
 			std::cerr << "(" << names[i] << ") Failed to minimize: Rosenbrock = " << rn << std::endl;
 			curr_success = false;
 		}
@@ -116,6 +117,49 @@ bool test_rb( std::vector<MinPtr2> &solvers, std::vector<std::string> &names ){
 		if( curr_success ){ std::cout << "(" << names[i] << ") Rosenbrock: Success" << std::endl; }
 		else{ success = false; }
 	}
+
+	return success;
+}
+
+// Test what happens when the energy is already minimized
+bool test_zero( std::vector<MinPtrD> &solvers, std::vector<std::string> &names ){
+
+	std::cout << "\nTest zero energy:" << std::endl;
+	typedef Eigen::Matrix<double,Eigen::Dynamic,1> VecX;
+	bool success = true;
+	int dim = 4;
+
+	// High/Low dimensions, linear, and Eigen::Dynamic.
+	// The solvers should work, since the Vecs/Mats are resized at run time.
+	DynProblem cp(dim);
+
+	int n_solvers = solvers.size();
+	for( int i=0; i<n_solvers; ++i ){
+		bool curr_success = true;
+
+		// Set max iterations to 1, should exit right away (at min)
+		solvers[i]->m_settings.max_iters = 1;
+		solvers[i]->m_settings.verbose = 1;
+		VecX x = cp.A.inverse() * cp.b;
+		solvers[i]->minimize( cp, x );
+
+		for( int i=0; i<dim; ++i ){
+			if( std::isnan(x[i]) || std::isinf(x[i]) ){
+				std::cerr << "(" << names[i] << ") Bad values in x: " << x[i] << std::endl;
+				curr_success = false;
+			}
+		}
+		VecX r = cp.A*x - cp.b;
+		double rn = r.norm(); // x should minimize |Ax-b|
+		if( rn > 1e-10 ){
+			std::cerr << "(" << names[i] << ") Failed to minimize: |Ax-b| = " << rn << std::endl;
+			curr_success = false;
+		}
+
+		if( curr_success ){ std::cout << "(" << names[i] << ") Linear (" << dim << "): Success" << std::endl; }
+		else{ success = false; }
+
+	} // end loop solvers
 
 	return success;
 }
@@ -149,6 +193,7 @@ int main(int argc, char *argv[] ){
 	bool success = true;
 	success &= test_linear( minD, names );
 	success &= test_rb( min2, names );
+	success &= test_zero( minD, names );
 	if( success ){
 		std::cout << "\nSUCCESS!" << std::endl;
 		return EXIT_SUCCESS;
