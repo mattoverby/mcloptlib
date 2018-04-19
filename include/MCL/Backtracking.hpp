@@ -27,41 +27,6 @@
 namespace mcl {
 namespace optlib {
 
-// Helper functions
-namespace internal {
-
-	template<typename Scalar>
-	static Scalar range( Scalar alpha, Scalar low, Scalar high ){
-		if( alpha < low ){ return low; }
-		else if( alpha > high ){ return high; }
-		return alpha;
-	}
-
-	// Cubic interpolation
-	// fx0 = f(x0)
-	// gtp = f'(x0)^T p
-	// fxa = f(x0 + alpha*p)
-	// alpha = step length
-	// fxp = previous fxa
-	// alphap = previous alpha
-	template<typename Scalar>
-	static Scalar cubic( Scalar fx0, Scalar gtp, Scalar fxa, Scalar alpha, Scalar fxp, Scalar alphap ){
-		typedef Eigen::Matrix<Scalar,2,1> Vec2;
-		typedef Eigen::Matrix<Scalar,2,2> Mat2;
-
-		Scalar mult = 1.0 / ( alpha*alpha * alphap*alphap * (alpha-alphap) );
-		Mat2 A;
-		A(0,0) = alphap*alphap;		A(0,1) = -alpha*alpha;
-		A(1,0) = -alphap*alphap*alphap;	A(1,1) = alpha*alpha*alpha;	
-		Vec2 B;
-		B[0] = fxa - fx0 - alpha*gtp; B[1] = fxp - fx0 - alphap*gtp;
-		Vec2 r = mult * A * B;
-		if( std::abs(r[0]) <= 0.0 ){ return -gtp / (2.0*r[1]); } // if quadratic
-		Scalar d = std::sqrt( r[1]*r[1] - 3.0*r[0]*gtp ); // discrim
-		return (-r[1] + d) / (3.0*r[0]);
-	}
-}
-
 
 //
 // Backtracking-Armijo with optional curvature (weak wolfe II) interpolation
@@ -88,7 +53,7 @@ public:
 			alpha *= tau;
 		}
 
-		if( iter == max_iters ){
+		if( iter >= max_iters ){
 			printf("Backtracking::linesearch Error: Reached max_iters\n");
 			return -1;
 		}
@@ -100,7 +65,7 @@ public:
 
 
 //
-// Backtracking-Armijo with curvature (weak wolfe II) interpolation
+// Backtracking-Armijo with cubic interpolation
 //
 template<typename Scalar, int DIM>
 class BacktrackingCurvature {
@@ -125,13 +90,13 @@ public:
 
 			Scalar alpha_tmp = iter == 0 ?
 				( gtp / (2.0 * (fx0 + gtp - fxa)) ) :
-				internal::cubic( fx0, gtp, fxa, alpha, fxp, alphap );
+				cubic( fx0, gtp, fxa, alpha, fxp, alphap );
 			fxp = fxa;
 			alphap = alpha;
-			alpha = internal::range( alpha_tmp, 0.1*alpha, 0.5*alpha );
+			alpha = range( alpha_tmp, 0.1*alpha, 0.5*alpha );
 		}
 
-		if( iter == max_iters ){
+		if( iter >= max_iters ){
 			printf("BacktrackingCurvature::linesearch Error: Reached max_iters\n");
 			return -1;
 		}
@@ -139,7 +104,37 @@ public:
 		return alpha;
 	}
 
-}; // end class Backtracking
+private:
+	static inline Scalar range( Scalar alpha, Scalar low, Scalar high ){
+		if( alpha < low ){ return low; }
+		else if( alpha > high ){ return high; }
+		return alpha;
+	}
+
+	// Cubic interpolation
+	// fx0 = f(x0)
+	// gtp = f'(x0)^T p
+	// fxa = f(x0 + alpha*p)
+	// alpha = step length
+	// fxp = previous fxa
+	// alphap = previous alpha
+	static inline Scalar cubic( Scalar fx0, Scalar gtp, Scalar fxa, Scalar alpha, Scalar fxp, Scalar alphap ){
+		typedef Eigen::Matrix<Scalar,2,1> Vec2;
+		typedef Eigen::Matrix<Scalar,2,2> Mat2;
+
+		Scalar mult = 1.0 / ( alpha*alpha * alphap*alphap * (alpha-alphap) );
+		Mat2 A;
+		A(0,0) = alphap*alphap;		A(0,1) = -alpha*alpha;
+		A(1,0) = -alphap*alphap*alphap;	A(1,1) = alpha*alpha*alpha;	
+		Vec2 B;
+		B[0] = fxa - fx0 - alpha*gtp; B[1] = fxp - fx0 - alphap*gtp;
+		Vec2 r = mult * A * B;
+		if( std::abs(r[0]) <= 0.0 ){ return -gtp / (2.0*r[1]); } // if quadratic
+		Scalar d = std::sqrt( r[1]*r[1] - 3.0*r[0]*gtp ); // discrim
+		return (-r[1] + d) / (3.0*r[0]);
+	}
+
+}; // end class BacktrackingCurvature
 
 } // ns optlib
 } // ns mcl

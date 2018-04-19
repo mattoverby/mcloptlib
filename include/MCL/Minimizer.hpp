@@ -57,7 +57,7 @@ public:
 		LSMethod ls_method; // see choices (above)
 
 		Settings() : verbose(0), max_iters(100),
-			ls_max_iters(10000), ls_decrease(1e-4),
+			ls_max_iters(100000), ls_decrease(1e-4),
 			ls_method(LSMethod::BacktrackingCurvature)
 			{}
 	} m_settings;
