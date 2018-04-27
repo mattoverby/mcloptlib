@@ -154,8 +154,8 @@ protected:
 			// Generally requires a large number of outer solver iterations
 			case TRMethod::CauchyPoint: {
 
-				Scalar tau = std::min( 1.0, std::pow(grad_norm,3) / (delta_k*gTBg) );
-				if( gTBg <= 0.0 ){ tau = 1.0; }
+				Scalar tau = 1.0;
+				if( gTBg > 0.0 ){ tau = std::min( 1.0, std::pow(grad_norm,3) / (delta_k*gTBg) ); }
 				dx = ( -tau * delta_k / grad_norm ) * grad;
 
 			} break;

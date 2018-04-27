@@ -12,6 +12,9 @@ Optimization algorithms:
 - Newton's
 - Non-linear conjugate gradient
 - L-BFGS
+- Trust Region with
+  - Cauchy Point
+  - Dog Leg
 
 Linesearch methods:
 - Backtracking (Armijo)
