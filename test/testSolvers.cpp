@@ -24,6 +24,7 @@
 #include "MCL/LBFGS.hpp"
 #include "MCL/NonLinearCG.hpp"
 #include "MCL/Newton.hpp"
+#include "MCL/TrustRegion.hpp"
 #include <memory>
 
 using namespace mcl::optlib;
@@ -187,6 +188,11 @@ int main(int argc, char *argv[] ){
 		min2.emplace_back( std::make_shared< Newton<double,2> >( Newton<double,2>() ) );
 		minD.emplace_back( std::make_shared< Newton<double,Eigen::Dynamic> >( Newton<double,Eigen::Dynamic>() ) );
 		names.emplace_back( "newton" );
+	}
+	if( mode=="trustregion" || mode=="all" ){
+		min2.emplace_back( std::make_shared< TrustRegion<double,2> >( TrustRegion<double,2>() ) );
+		minD.emplace_back( std::make_shared< TrustRegion<double,Eigen::Dynamic> >( TrustRegion<double,Eigen::Dynamic>() ) );
+		names.emplace_back( "trustregion" );
 	}
 
 	bool success = true;

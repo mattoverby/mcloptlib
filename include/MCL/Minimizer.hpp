@@ -40,6 +40,12 @@ enum class LSMethod {
 	WeakWolfeBisection // slow
 };
 
+// Trust region subproblem method (see TrustRegion.hpp)
+enum class TRMethod {
+	CauchyPoint,
+	DogLeg
+};
+
 //
 // Base class for optimization algs
 //
@@ -54,11 +60,13 @@ public:
 		int max_iters; // usually changed by derived constructors
 		int ls_max_iters; // max line search iters
 		Scalar ls_decrease; // sufficient decrease param
-		LSMethod ls_method; // see choices (above)
+		LSMethod ls_method; // see LSMethod (above)
+		TRMethod tr_method; // see TRMethod (above)
 
 		Settings() : verbose(0), max_iters(100),
 			ls_max_iters(100000), ls_decrease(1e-4),
-			ls_method(LSMethod::BacktrackingCubic)
+			ls_method(LSMethod::BacktrackingCubic),
+			tr_method(TRMethod::DogLeg)
 			{}
 	} m_settings;
 
@@ -77,7 +85,9 @@ protected:
 		int v = m_settings.verbose;
 		Scalar sd = m_settings.ls_decrease;
 		switch( m_settings.ls_method ){
-			default:{ alpha = Backtracking<Scalar,DIM>::search(v, mi, sd, x, p, prob, alpha0); } break;
+			default:{
+				alpha = Backtracking<Scalar,DIM>::search(v, mi, sd, x, p, prob, alpha0);
+			} break;
 			case LSMethod::None: { alpha = 1.0; } break;
 			case LSMethod::MoreThuente: {
 				alpha = MoreThuente<Scalar,DIM>::search(x, p, prob, alpha0);
@@ -91,7 +101,7 @@ protected:
 			case LSMethod::WeakWolfeBisection: {
 				alpha = WolfeBisection<Scalar,DIM>::search(v, mi, x, p, prob, alpha0);
 			} break;
-		} // end swithc method
+		}
 		return alpha;
 	} // end do linesearch
 
