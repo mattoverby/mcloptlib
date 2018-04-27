@@ -73,6 +73,8 @@ public:
 			problem.hessian(x,B); // get hessian (or approximation)
 
 			// Use a Newton step if we can
+			// If using Cauchy Point I should technically skip this step?
+			// Should combine with the above step through...
 			problem.solve_hessian(x,grad,dx); 
 
 			// If it's outside the trust region, pick new descent
@@ -145,8 +147,6 @@ protected:
 		const VecX &grad, const MatX &B,
 		VecX &dx ){
 
-		Scalar grad_norm = grad.norm();
-		Scalar gTg = grad.dot(grad);
 		Scalar gTBg = grad.dot(B*grad);
 
 		switch( m ){
@@ -154,6 +154,7 @@ protected:
 			// Generally requires a large number of outer solver iterations
 			case TRMethod::CauchyPoint: {
 
+				Scalar grad_norm = grad.norm();
 				Scalar tau = 1.0;
 				if( gTBg > 0.0 ){ tau = std::min( 1.0, std::pow(grad_norm,3) / (delta_k*gTBg) ); }
 				dx = ( -tau * delta_k / grad_norm ) * grad;
@@ -163,6 +164,7 @@ protected:
 			// Uses steepest descent if possible
 			case TRMethod::DogLeg: {
 
+				Scalar gTg = grad.dot(grad);
 				VecX dx_U = ( -gTg / gTBg ) * grad;
 				Scalar dx_U_norm = dx_U.norm();
 
