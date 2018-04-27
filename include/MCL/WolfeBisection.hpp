@@ -34,13 +34,16 @@ public:
 	typedef Eigen::Matrix<Scalar,DIM,1> VecX;
 	typedef Eigen::Matrix<Scalar,DIM,DIM> MatX;
 
-	static inline Scalar search(const VecX &x, const VecX &p, Problem<Scalar,DIM> &problem, Scalar alpha0) {
+	static inline Scalar search(int verbose, int max_iters, const VecX &x, const VecX &p, Problem<Scalar,DIM> &problem, Scalar alpha0) {
 
+		// First things first, check descent norm
+		const Scalar t_eps = std::numeric_limits<Scalar>::epsilon();
+		if( p.norm() <= t_eps ){ return t_eps; }
+
+		const Scalar minChange = 10.0*t_eps;
 		const Scalar c1 = 0.3;
 		const Scalar c2 = 0.6;
-		const int max_iter = 100000;
 		const int dim = x.rows();
-		const Scalar minChange = 1e-10;
 
 		Scalar low = 0.0;
 		Scalar high = -1.0; // set when needed
@@ -52,17 +55,17 @@ public:
 			grad0 = VecX::Zero(dim);
 			grad_new = VecX::Zero(dim);
 		}
-		Scalar fx = problem.gradient(x, grad0);
+		Scalar fx0 = problem.gradient(x, grad0);
 		const Scalar gtp = grad0.dot(p);
 
 		int iter = 0;
-		for( ; iter < max_iter; ++iter ){
+		for( ; iter < max_iters; ++iter ){
 
 			// Value and gradient at current step length
 			grad_new.setZero();
 			Scalar fx_new = problem.gradient(x + alpha*p, grad_new);
 
-			if( fx_new > fx + c1*alpha*gtp ){
+			if( fx_new > fx0 + c1*alpha*gtp ){
 				high = alpha;
 				alpha = 0.5 * ( high + low );
 			}
@@ -79,8 +82,8 @@ public:
 			alpha_last = alpha;
 		}
 
-		if( iter == max_iter ){
-			printf("Backtracking::linesearch Error: Reached max_iters\n");
+		if( iter == max_iters ){
+			if( verbose > 0 ){ printf("WolfeBisection::linesearch Error: Reached max_iters\n"); }
 			return -1;
 		}
 

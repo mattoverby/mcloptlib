@@ -36,7 +36,7 @@ enum class LSMethod {
 	None = 0, // use step length = 1, not recommended
 	MoreThuente, // TODO test this one for correctness
 	Backtracking, // basic backtracking with sufficient decrease
-	BacktrackingCurvature, // backtracking with cubic interpolation
+	BacktrackingCubic, // backtracking with cubic interpolation
 	WeakWolfeBisection // slow
 };
 
@@ -58,7 +58,7 @@ public:
 
 		Settings() : verbose(0), max_iters(100),
 			ls_max_iters(100000), ls_decrease(1e-4),
-			ls_method(LSMethod::BacktrackingCurvature)
+			ls_method(LSMethod::BacktrackingCubic)
 			{}
 	} m_settings;
 
@@ -70,7 +70,7 @@ public:
 
 protected:
 
-	// Line search method can be changed through m_settings.
+	// Line search method/options can be changed through m_settings.
 	Scalar linesearch(const VecX &x, const VecX &p, Problem<Scalar,DIM> &prob, double alpha0) const {
 		double alpha = alpha0;
 		int mi = m_settings.ls_max_iters;
@@ -85,11 +85,11 @@ protected:
 			case LSMethod::Backtracking: {
 				alpha = Backtracking<Scalar,DIM>::search(v, mi, sd, x, p, prob, alpha0);
 			} break;
-			case LSMethod::BacktrackingCurvature: {
-				alpha = BacktrackingCurvature<Scalar,DIM>::search(v, mi, sd, x, p, prob, alpha0);
+			case LSMethod::BacktrackingCubic: {
+				alpha = BacktrackingCubic<Scalar,DIM>::search(v, mi, sd, x, p, prob, alpha0);
 			} break;
 			case LSMethod::WeakWolfeBisection: {
-				alpha = WolfeBisection<Scalar,DIM>::search(x, p, prob, alpha0);
+				alpha = WolfeBisection<Scalar,DIM>::search(v, mi, x, p, prob, alpha0);
 			} break;
 		} // end swithc method
 		return alpha;

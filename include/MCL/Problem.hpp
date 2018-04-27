@@ -57,7 +57,7 @@ public:
 		finiteHessian(x, hessian);
 	}
 
-	// Solve dx = H^-1 g (used by Newton's)
+	// Solve dx = H^-1 -g (used by Newton's)
 	virtual void solve_hessian(const VecX &x, const VecX &grad, VecX &dx){
 		MatX hess;
 		if( DIM  == Eigen::Dynamic ){

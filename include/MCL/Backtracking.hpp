@@ -29,7 +29,7 @@ namespace optlib {
 
 
 //
-// Backtracking-Armijo with optional curvature (weak wolfe II) interpolation
+// Old reliable backtracking Armijo
 //
 template<typename Scalar, int DIM>
 class Backtracking {
@@ -58,7 +58,7 @@ public:
 		}
 
 		if( iter >= max_iters ){
-			if( verbose > 0 ){ printf("Backtracking::linesearch Error: Reached max_iters\n"); }
+			if( verbose > 0 ){ printf("Backtracking::search Error: Reached max_iters\n"); }
 			return -1;
 		}
 
@@ -69,10 +69,10 @@ public:
 
 
 //
-// Backtracking-Armijo with cubic interpolation
+// Backtracking Armijo with cubic interpolation
 //
 template<typename Scalar, int DIM>
-class BacktrackingCurvature {
+class BacktrackingCubic {
 public:
 	typedef Eigen::Matrix<Scalar,DIM,1> VecX;
 
@@ -105,7 +105,7 @@ public:
 		}
 
 		if( iter >= max_iters ){
-			if( verbose > 0 ){ printf("BacktrackingCurvature::linesearch Error: Reached max_iters\n"); }
+			if( verbose > 0 ){ printf("BacktrackingCubic::search Error: Reached max_iters\n"); }
 			return -1;
 		}
 
@@ -142,7 +142,7 @@ private:
 		return (-r[1] + d) / (3.0*r[0]);
 	}
 
-}; // end class BacktrackingCurvature
+}; // end class BacktrackingCubic
 
 } // ns optlib
 } // ns mcl

@@ -138,7 +138,7 @@ public:
 			Scalar denom = y_temp.dot(y_temp);
 			if( std::abs(denom) <= 0 ){
 				if( show_denom_warning ){
-					printf("L-BFGS Warning: Encountered a zero denominator\n");
+					printf("LBFGS::minimize Warning: Encountered a zero denominator\n");
 				}
 				break;
 			}
