@@ -52,6 +52,9 @@ public:
 		Scalar delta_k = 2.0; // trust region radius
 		const Scalar delta_max = 8.0; // max trust region radius
 		const Scalar eta = 0.125; // min reduction ratio allowed (0<eta<0.25)
+		const TRMethod m = this->m_settings.tr_method;
+		int max_iters = this->m_settings.max_iters;
+		int verbose = this->m_settings.verbose;
 
 		VecX grad, dx, x_last;
 		MatX B; // Approximate hessian
@@ -63,19 +66,13 @@ public:
 			B.resize(dim,dim);
 		}
 
-		const TRMethod m = this->m_settings.tr_method;
-		int max_iters = this->m_settings.max_iters;
+		// Init gradient and hessian
+		Scalar fxk = problem.gradient(x,grad); // gradient and objective
+		problem.hessian(x,B); // get hessian (or approximation)
+		problem.solve_hessian(x,grad,dx); // attempt with newtons
 
 		int iter = 0;
 		for( ; iter < max_iters; ++iter ){
-
-			Scalar fxk = problem.gradient(x,grad); // gradient and objective
-			problem.hessian(x,B); // get hessian (or approximation)
-
-			// Use a Newton step if we can
-			// If using Cauchy Point I should technically skip this step?
-			// Should combine with the above step through...
-			problem.solve_hessian(x,grad,dx); 
 
 			// If it's outside the trust region, pick new descent
 			if( dx.norm() > delta_k ){
@@ -98,9 +95,24 @@ public:
 
 			// Take a step, otherwise need to re-eval sub problem
 			if( rho_k > eta ){
+
 				x_last = x;
 				x = x + dx;
+
+				// Only need to compute gradient and hessian
+				// if x has actually changed.
+				fxk = problem.gradient(x,grad); // gradient and objective
 				if( problem.converged(x_last,x,grad) ){ break; }
+
+				// I think I should improve this as to not call both hessian
+				// and solve_hessian, which likely causes redundant computation.
+				problem.hessian(x,B); // get hessian (or approximation)
+				problem.solve_hessian(x,grad,dx); // attempt with newtons
+			}
+
+			if( std::isnan(rho_k) ){
+				if( verbose ){ printf("\n**TrustRegion Error: NaN reduction"); }
+				return Minimizer<Scalar,DIM>::FAILURE;
 			}
 
 		}
