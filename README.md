@@ -21,3 +21,8 @@ Linesearch methods:
 - Backtracking with cubic interpolation
 - Bisection
 - MoreThuente
+
+## To-do:
+
+- Sparse Hessians
+- Auto-diff
