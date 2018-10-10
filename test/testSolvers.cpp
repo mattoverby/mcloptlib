@@ -59,7 +59,6 @@ bool test_linear( std::vector<MinPtrD> &solvers, std::vector<std::string> &names
 			else { solvers[i]->m_settings.max_iters = 100; }
 			solvers[i]->m_settings.verbose = 1;
 			VecX x = VecX::Zero(dim);
-
 			solvers[i]->minimize( cp, x );
 			for( int i=0; i<dim; ++i ){
 				if( std::isnan(x[i]) || std::isinf(x[i]) ){

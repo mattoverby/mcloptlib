@@ -30,25 +30,34 @@ namespace optlib {
 // Bisection method for Weak Wolfe conditions
 template<typename Scalar, int DIM>
 class WolfeBisection {
+private:
+	// Strong wolfe conditions: the armijo rule and a stronger curvature condition
+	// alpha = step length
+	// fx_ap = f(x + alpha p)
+	// fx = f(x)
+	// pT_gx = p^T ( grad f(x) )
+	// pT_gx_ap = p^T ( grad f(x + alpha p) )
+	static inline bool strong_wolfe( Scalar alpha,
+		Scalar fx, Scalar pT_gx, 
+		Scalar fx_ap, Scalar pT_gx_ap,
+		Scalar wolfe_c1, Scalar wolfe_c2 ){
+		if( !(fx_ap <= fx + wolfe_c1 * alpha * pT_gx) ){ return false; } // armijo rule
+		return std::abs( pT_gx_ap ) <= wolfe_c2 * std::abs( pT_gx );
+	}
+
 public:
 	typedef Eigen::Matrix<Scalar,DIM,1> VecX;
 	typedef Eigen::Matrix<Scalar,DIM,DIM> MatX;
 
 	static inline Scalar search(int verbose, int max_iters, const VecX &x, const VecX &p, Problem<Scalar,DIM> &problem, Scalar alpha0) {
 
-		// First things first, check descent norm
 		const Scalar t_eps = std::numeric_limits<Scalar>::epsilon();
-		if( p.norm() <= t_eps ){ return t_eps; }
-
-		const Scalar minChange = 10.0*t_eps;
-		const Scalar c1 = 0.3;
-		const Scalar c2 = 0.6;
+		const Scalar wolfe_c1 = 0.0001;
+		const Scalar wolfe_c2 = 0.8; // should be 0.1 for CG!
 		const int dim = x.rows();
-
-		Scalar low = 0.0;
-		Scalar high = -1.0; // set when needed
-		Scalar alpha = alpha0;
-		Scalar alpha_last = 0.0;
+		double alpha = alpha0;
+		double alpha_min = 1e-8;
+		double alpha_max = 1;
 
 		VecX grad0, grad_new;
 		if( DIM == Eigen::Dynamic ){
@@ -57,37 +66,40 @@ public:
 		}
 		Scalar fx0 = problem.gradient(x, grad0);
 		const Scalar gtp = grad0.dot(p);
+		bool min_set = false;
 
 		int iter = 0;
 		for( ; iter < max_iters; ++iter ){
 
-			// Value and gradient at current step length
+			// Should we stop iterating?
+			if( std::abs(alpha_max-alpha_min) <= t_eps ){ break; }
+
+			// Step halfway
+			alpha = ( alpha_max + alpha_min ) * 0.5;
 			grad_new.setZero();
-			Scalar fx_new = problem.gradient(x + alpha*p, grad_new);
+			Scalar fx_ap = problem.gradient(x + alpha*p, grad_new);
+			Scalar gt_ap = grad_new.dot( p );
 
-			if( fx_new > fx0 + c1*alpha*gtp ){
-				high = alpha;
-				alpha = 0.5 * ( high + low );
+			// Check the wolfe conditions
+			bool happy_wolfe = strong_wolfe( alpha, fx0, gtp, fx_ap, gt_ap, wolfe_c1, wolfe_c2 );
+			if( happy_wolfe ){
+				alpha_min = alpha;
+				min_set = true;
 			}
-			else if( grad_new.dot(p) < c2*gtp ){
-				low = alpha;
-				if( high < 0 ){ alpha = 2.0 * low; }
-				else{ alpha = 0.5 * ( high + low ); }
-			}
-			else{ break; }
+			else { alpha_max = alpha; }
 
-			// Exit if change in bisection step too low.
-			// Not perfectly safe, but probably fine?
-			if( std::abs(alpha-alpha_last) < minChange ){ break; }
-			alpha_last = alpha;
-		}
+		} // end bs iters
 
 		if( iter == max_iters ){
 			if( verbose > 0 ){ printf("WolfeBisection::linesearch Error: Reached max_iters\n"); }
 			return -1;
 		}
+		if( !min_set ){
+			if( verbose > 0 ){ printf("WolfeBisection::linesearch Error: LS blocked\n"); }
+			return -1;
+		}
 
-		return alpha;
+		return alpha_min;
 
 	}
 };
