@@ -24,5 +24,6 @@ Linesearch methods:
 
 ## To-do:
 
+- Option of std::function for value/gradient instead of Problem class
 - Sparse Hessians
 - Auto-diff
