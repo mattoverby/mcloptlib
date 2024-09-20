@@ -26,6 +26,7 @@
 #include "MCL/Newton.hpp"
 #include "MCL/TrustRegion.hpp"
 #include <memory>
+#include <vector>
 
 using namespace mcl::optlib;
 typedef std::shared_ptr< Minimizer<double,2> > MinPtr2; // rb
